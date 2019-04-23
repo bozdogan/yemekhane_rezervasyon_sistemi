@@ -1,3 +1,7 @@
+# IDEA Project Metadata
+.idea/
+*.iml
+
 # Compiled class file
 *.class
 
