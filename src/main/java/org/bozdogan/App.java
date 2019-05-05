@@ -8,7 +8,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class App extends Application{
-    static String appName = "Esmekhane";
+    static String appName = "EsYemek Otomasyonu";
 
     static Stage stage;
     static Database database;
