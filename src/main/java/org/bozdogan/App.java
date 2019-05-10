@@ -9,10 +9,12 @@ import javafx.stage.Stage;
 
 public class App extends Application{
     static String appName = "EsYemek Otomasyonu";
+    static double unitPrice = 1.25;
 
     static Stage stage;
     static Database database;
     static String currentUser;
+    static String personId; // for database relations
 
     @Override
     public void start(Stage primaryStage) throws Exception{

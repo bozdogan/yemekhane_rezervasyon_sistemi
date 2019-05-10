@@ -24,14 +24,15 @@ public class Login{
         try{
             // If login succeeds, one of the panels will replace current scene.
             Parent newRoot = null;
-            String newTitle = null, login_name = null;
+            String newTitle = null;
 
             if(usernameTx.getText().equals("admin") &&
                     passwordTx.getText().equals("admin")){ // check admin login
 
-                login_name = "admin";
+                App.currentUser = "amdin";
+
                 // load admin panel
-                newTitle = App.appName+" Admin Panel | User: "+login_name;
+                newTitle = App.appName+" Admin Panel | User: "+App.currentUser;
                 newRoot = FXMLLoader.load(getClass().getResource("/adminpanel.fxml"));
 
             } else{ // check login
@@ -48,10 +49,15 @@ public class Login{
 
                 if(result.size()>0){
                     // login successful
-                    login_name = result.get("firstname")+" "+result.get("lastname");
+
+                    // store pid
+                    App.personId = usernameTx.getText();
+
+                    // store the username of the current user.
+                    App.currentUser = result.get("firstname")+" "+result.get("lastname");
 
                     // load user panel
-                    newTitle = App.appName+" Student Panel | User: "+login_name;
+                    newTitle = App.appName+" Student Panel | User: "+App.currentUser;
                     newRoot = FXMLLoader.load(getClass().getResource("/userpanel.fxml"));
 
                 } else{
@@ -61,8 +67,6 @@ public class Login{
             }
 
             if(newRoot!=null){
-                // store the username of the current user.
-                App.currentUser = login_name;
                 // change the title
                 App.stage.setTitle(newTitle);
                 // load the panel.
