@@ -86,8 +86,8 @@ public class Adminpanel implements Initializable{
     @FXML private Label mostPurchasedDayLb;
     @FXML private Label mostServedMealLb;
 
-    @FXML private DatePicker stat_startDate;
-    @FXML private DatePicker stat_endDate;
+    @FXML private DatePicker stat_startDt;
+    @FXML private DatePicker stat_endDt;
 
     @FXML private Label countLb1;
     @FXML private Label countLb2;
@@ -131,9 +131,9 @@ public class Adminpanel implements Initializable{
                 .addListener((ListChangeListener<? super TablePosition>) e -> fetchFoodsOfMeal());
 
         // INIT STATISTICS DATE PICKERS
-        stat_startDate.valueProperty().addListener(
+        stat_startDt.valueProperty().addListener(
                 (observable, oldValue, newValue) -> loadDateIntervalStatistics());
-        stat_endDate.valueProperty().addListener(
+        stat_endDt.valueProperty().addListener(
                 (observable, oldValue, newValue) -> loadDateIntervalStatistics());
     }
 
@@ -538,11 +538,69 @@ public class Adminpanel implements Initializable{
 
     @FXML
     public void loadGeneralStatictics(){
+        try{
+            // MOST PURCHASED MEAL : DATE
+            App.database.prepare("SELECT COUNT(*) as count, date FROM meal, has_meal " +
+                    "WHERE meal.mid = has_meal.mid " +
+                    "GROUP BY date " +
+                    "ORDER BY count DESC");
 
+            Map result = App.database.fetch(null);
+            if(result.isEmpty()){
+                mostPurchasedDateLb.setText("not present");
+            } else{
+                mostPurchasedDateLb.setText((String) result.get("date"));
+            }
+
+        } catch(SQLException e){ System.out.println("// MOST PURCHASED MEAL : DATE"); e.printStackTrace(); }
+
+            // MOST PURCHASES ON AVERAGE : WEEKDAY
+
+
+        try{
+            // MOST SERVED FOOD : FOOD
+            App.database.prepare("SELECT COUNT(*) as count, food_name FROM food, has_food" +
+                    "WHERE food.fid=has_food.fid GROUP BY fid ORDER BY count DESC");
+
+            Map result = App.database.fetch(null);
+            if(result.isEmpty()){
+                mostServedMealLb.setText("not present");
+            } else{
+                mostServedMealLb.setText((String) result.get("date"));
+            }
+
+        } catch(SQLException e){ System.out.println("// MOST SERVED FOOD : FOOD"); e.printStackTrace(); }
     }
 
     @FXML
     public void loadDateIntervalStatistics(){
+        LocalDate startDate, endDate;
+        startDate = stat_startDt.getValue();
+        endDate = stat_endDt.getValue();
+
+        if(startDate==null || endDate==null)
+            return; // both need to be picked to proceed.
+
+        try{
+            // STUDENTS PURCHASED ANY MEAL
+            App.database.prepare("SELECT COUNT(*) as count FROM has_meal" +
+                    "WHERE date>=? AND date<=? GROUP BY pid");
+
+            Map result = App.database.fetch(new HashMap<Integer, Object>(){{
+                put(1, startDate);
+                put(2, endDate);
+            }});
+
+            if(result.isEmpty()){
+                mostServedMealLb.setText("N/A");
+            } else{
+                mostServedMealLb.setText((String) result.get("count"));
+            }
+
+        } catch(SQLException e){ e.printStackTrace(); }
+        // STUDENTS CHANGED REFECTORY
+
+        // STUDENT MISSED A MEAL THEY PURCHASED
 
     }
 

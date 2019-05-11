@@ -3,6 +3,7 @@ package org.bozdogan;
 import java.sql.*;
 import java.util.*;
 
+/** Not the best API in the world :/ */
 public class Database implements AutoCloseable{
 
     private Properties connectionInfo;

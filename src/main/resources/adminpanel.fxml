@@ -286,9 +286,9 @@
                   </VBox>
             </content>
           </Tab>
-            <Tab disable="true" text="-">
+            <Tab text="-">
               <content>
-                  <VBox disable="true" prefHeight="200.0" prefWidth="100.0" spacing="6.0">
+                  <VBox prefHeight="200.0" prefWidth="100.0" spacing="6.0">
                      <children>
                         <HBox alignment="CENTER_LEFT" spacing="6.0">
                            <children>
@@ -312,9 +312,9 @@
                         <HBox alignment="CENTER_LEFT" spacing="6.0">
                            <children>
                               <Label text="Between" />
-                              <DatePicker fx:id="stat_startDate" />
+                              <DatePicker fx:id="stat_startDt" />
                               <Label text="and" />
-                              <DatePicker fx:id="stat_endDate" />
+                              <DatePicker fx:id="stat_endDt" />
                               <Label text=" :" />
                            </children>
                            <padding>
