@@ -1,4 +1,4 @@
-package org.bozdogan;
+package org.bozdgn;
 
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -13,7 +13,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 import javafx.scene.control.cell.PropertyValueFactory;
-import org.bozdogan.model.*;
+import org.bozdgn.model.*;
 
 public class Adminpanel implements Initializable{
 

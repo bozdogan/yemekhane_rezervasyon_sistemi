@@ -1,9 +1,11 @@
-package org.bozdogan;
+package org.bozdgn;
 
 import java.sql.*;
 import java.util.*;
 
-/** Not the best API in the world :/ */
+/** Not the best API in the world :/
+ * I realize now that this is just a wrapper around JDBC to make it
+ * slightly more tolerable. Not saying it succeeds, tho. */
 public class Database implements AutoCloseable{
 
     private Properties connectionInfo;

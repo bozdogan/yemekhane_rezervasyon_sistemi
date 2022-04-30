@@ -1,24 +1,24 @@
-package org.bozdogan.model;
+package org.bozdgn.model;
 
 import java.time.LocalDate;
 
-public class Meal{
-    private int mid;
+public class Reservation{
     private LocalDate date;
     private String repast;
+    private String refectory;
 
-    public Meal(int mid, LocalDate date, String repast){
-        this.mid = mid;
+    public Reservation(LocalDate date, String repast, String refectory){
         this.date = date;
         this.repast = repast;
+        this.refectory = refectory;
     }
-
-    public int getMid(){ return mid; }
-    public void setMid(int mid){ this.mid = mid; }
 
     public LocalDate getDate(){ return date; }
     public void setDate(LocalDate date){ this.date = date; }
 
     public String getRepast(){ return repast; }
     public void setRepast(String repast){ this.repast = repast; }
+
+    public String getRefectory(){ return refectory; }
+    public void setRefectory(String refectory){ this.refectory = refectory; }
 }
