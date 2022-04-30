@@ -3,12 +3,32 @@
 Bu proje okul yemekhanesi düşünülerek hazırlanmış bir rezervasyon yönetim
 sistemidir. İstemci JavaFX kullanılarak geliştirilmiştir.
 
-Projeyi üniversitenin başlarında kodlamıştım. Elimde bu *codebase*ten başka
-döküman olmadığı için kodun ne yaptığını şimdi, 4 yılın ardından tersine
-mühendislik yaparak anlamaya çalışacağım.
+Projeyi üniversitenin başlarında kodlamıştım. O zaman bu kodlar projenin diğer
+parçalarıyla (MySQL sunucusu, projenin minimum gereksinimleri, kağıda çizdiğimiz
+tablo ilişkileri planı vs.) bir arada durduğu için neyin ne olduğunu anlamak bu
+kadar zor değildi; ancak şu an elimde bu koddan başka bir şey yok ve kod bayağı
+kötü yaşlanmış be!
 
-Önce veritabanı şemasını çıkarmaya karar verdim. Uygulamanın rastgele
-yerlerindeki SQL kodlarını inceleyerek çıkardığım tablo yapıları şu şekilde::
+Öte yandan, üniversitede yaptığım en kapsamlı projeler arasında ilk üçe girecek
+bir proje bu. Programlamada acemi olduğum yıllarda altından kalkmış olduğum bir iş.
+Hala çalışıyor olsa müzelik eser gibi saklayabilirdim bu projeyi, geçmişe açılan bir
+pencere gibi bu kodlar. Çalışsaydı... Çalışmayan ve objektif bakıldığında kötü yazılmış
+bir yazılım projesinin pek bakılmaya değer bir şey olmadığını düşünüyorum. Bu
+nedenle projeyi en azından "restore edip" öyle müzeye koymanın daha uygun olduğuna
+karar verdim.
+
+İlk etapta günümüz bilgisayarlarında çalışacak hale getirip<!-- remaster --> 
+sonrasında da kod kalitesini iyileştirmeyi ve belki tasarımı modernleştirmeyi<!-- remake -->
+amaçlıyorum. Bu süreci de bu *okubeni* dosyasında belgelendireceğim.
+
+
+## Bölüm 1: Eski Kodu Günümüzde Çalışır Hâle Getirmek
+
+Doğru konfigüre edilmiş bir veritabanı hazırda bulunmadan program normal açılışını
+gerçekleştiremiyordu. Kodları fazla deşmeden önce programı açıp işlevini görmek
+istiyordum o nedenle de önce veritabanı şemasını çıkarmaya karar verdim. Programı
+çalıştırınca aldığım hata mesajlarını inceleyerek ve kodlardaki SQL sorgularını
+ayıklayarak gerekli tablo yapılarını çıkardım:
 
 ```sql
 CREATE TABLE `users` (
@@ -97,8 +117,13 @@ ENGINE=InnoDB
 ;
 ```
 
-Uygulama üzerinde bir geliştirme yapmadan önce şu haliyle çalışıp çalışmadığını
-test etmeye karar verdim. İlk yapacağım iş, test verileri oluşturan bir betik
-yazmak oldu. (`org.bozdgn.CreateMockDatabase.java`) Bu betik<!-- ya da "script", her neyse artık.. --> veritabanını sıfırlayıp tabloları baştan oluşturuyor ve istemcinin çalışabilmesi
-için birkaç örnek veri oluşturuyor. 
+Kodun ihtiyaç duyduğu tabloları yine kodun içerisinden oluşturan bir betik<!-- ya da "script", her neyse artık.. -->
+yazdım. (*bkz.* `org.bozdgn.CreateMockDatabase`) Böylece test etme işlemini de
+kolaylaştırmış oldum. (Her seferinde veritabanını elle sıfırlamaya gerek kalmadı.)
+Kod üzerinde değişiklik yapmadan önce programın bu aşamada çalıştığına emin olmak
+istedim ve birkaç örnek veri girip istemciyi denedim. Beklediğim gibi çalışıyordu.
+Hâlâ hatırladığım gibi, aşırı kullanışsız arayüzler ve düzgünce işlenmemiş hatalarla
+dolu. Üniversiteli Bora'nın elinden çıkma bir şâheser..
+
+- - -
 
