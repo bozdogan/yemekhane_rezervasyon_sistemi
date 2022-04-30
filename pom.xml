@@ -6,7 +6,7 @@
 
     <groupId>org.bozdgn</groupId>
     <artifactId>yemekhane_rezervasyon_sistemi</artifactId>
-    <version>1.0</version>
+    <version>1.1</version>
 
     <dependencies>
         <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->

@@ -21,9 +21,9 @@ public class App extends Application{
         stage = primaryStage;
 
         database = new Database("localhost",
-                "root",
+                "refectory",
                 "",
-                "refectory_database");
+                "refectory");
 
         if(!database.testConnection()){
             AlertBox.showWarningAndWait("Database connection failure!");
