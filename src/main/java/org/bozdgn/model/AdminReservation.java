@@ -1,4 +1,4 @@
-package org.bozdogan.model;
+package org.bozdgn.model;
 
 import java.time.LocalDate;
 

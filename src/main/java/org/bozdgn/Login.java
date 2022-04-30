@@ -1,4 +1,4 @@
-package org.bozdogan;
+package org.bozdgn;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;

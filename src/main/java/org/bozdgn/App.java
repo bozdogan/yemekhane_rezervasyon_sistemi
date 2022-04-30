@@ -1,4 +1,4 @@
-package org.bozdogan;
+package org.bozdgn;
 
 import javafx.application.Application;
 import javafx.application.Platform;
