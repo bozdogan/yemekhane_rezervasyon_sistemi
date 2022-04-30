@@ -1,9 +1,9 @@
 
 CREATE TABLE `users` (
-    `pid` int NOT NULL,
-    `firstname` varchar(50) NOT NULL,
-    `lastname` varchar(50) NOT NULL,
-    `password` varchar(50) NOT NULL,
+    `pid`  VARCHAR(50) NOT NULL,
+    `firstname`  VARCHAR(50) NOT NULL,
+    `lastname`  VARCHAR(50) NOT NULL,
+    `password`  VARCHAR(50) NOT NULL,
     PRIMARY KEY (`pid`)
 )
 COLLATE='utf8_turkish_ci'
@@ -35,7 +35,7 @@ AUTO_INCREMENT=11
 
 
 CREATE TABLE `reservations` (
-    `pid` INT(10) NOT NULL,
+    `pid`  VARCHAR(50) NOT NULL,
     `mid` INT(10) NOT NULL,
     `refectory` ENUM('ieylul','yemre') NOT NULL,
     PRIMARY KEY (`pid`, `mid`),
@@ -49,7 +49,7 @@ ENGINE=InnoDB
 
 
 CREATE TABLE `purchase` (
-    `pid` INT(10) NOT NULL,
+    `pid`  VARCHAR(50) NOT NULL,
     `mid` INT(10) NOT NULL,
     `date` DATE NOT NULL,
     `repast` ENUM('B','L','D') NOT NULL,
@@ -75,7 +75,7 @@ ENGINE=InnoDB
 
 
 CREATE TABLE `has_meal` (
-    `pid` INT(10) NOT NULL,
+    `pid`  VARCHAR(50) NOT NULL,
     `mid` INT(10) NOT NULL,
     `refectory` ENUM('ieylul','yemre') NOT NULL,
     PRIMARY KEY (`pid`, `mid`)

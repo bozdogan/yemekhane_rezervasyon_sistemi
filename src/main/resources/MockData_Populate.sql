@@ -18,8 +18,8 @@ INSERT INTO `food` (`fid`, `food_name`) VALUES
 
 
 INSERT INTO `users` (`pid`, `firstname`, `lastname`, `password`) VALUES
-    (10000101, 'Can', 'Simit', '1234'),
-    (10000102, 'Ayşe', 'Fatma', '1234'),
-    (10000103, 'Ahmet', 'Mehmet', '123');
+    ('10000101', 'Can', 'Simit', '1234'),
+    ('10000102', 'Ayşe', 'Fatma', '1234'),
+    ('10000103', 'Ahmet', 'Mehmet', '123');
 
 
