@@ -1,4 +1,4 @@
-package org.bozdgn;
+package org.bozdgn.service;
 
 import java.sql.*;
 import java.util.*;

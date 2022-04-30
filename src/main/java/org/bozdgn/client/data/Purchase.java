@@ -1,27 +1,17 @@
-package org.bozdgn.model;
+package org.bozdgn.client.data;
 
 import java.time.LocalDate;
 
-public class AdminReservation{
-    private String pid;
-    private int mid;
+public class Purchase{
     private LocalDate date;
     private String repast;
     private String refectory;
 
-    public AdminReservation(String pid, int mid, LocalDate date, String repast, String refectory){
-        this.pid = pid;
-        this.mid = mid;
+    public Purchase(LocalDate date, String repast, String refectory){
         this.date = date;
         this.repast = repast;
         this.refectory = refectory;
     }
-
-    public String getPid(){ return pid; }
-    public void setPid(String pid){ this.pid = pid; }
-
-    public int getMid(){ return mid; }
-    public void setPid(int pid){ this.mid = mid; }
 
     public LocalDate getDate(){ return date; }
     public void setDate(LocalDate date){ this.date = date; }

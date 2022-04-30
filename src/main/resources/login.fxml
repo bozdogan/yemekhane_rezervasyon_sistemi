@@ -14,7 +14,7 @@
 
 <VBox alignment="TOP_CENTER" fillWidth="false" minHeight="260.0" minWidth="320.0" prefHeight="600.0"
       prefWidth="800.0" spacing="12.0" xmlns="http://javafx.com/javafx/8.0.172-ea"
-      xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.bozdgn.Login">
+      xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.bozdgn.client.Login">
     <padding>
         <Insets top="180.0"/>
     </padding>

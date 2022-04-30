@@ -1,4 +1,4 @@
-package org.bozdgn;
+package org.bozdgn.client;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -6,6 +6,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.bozdgn.service.Database;
 
 public class App extends Application{
     static String appName = "EsYemek Otomasyonu";

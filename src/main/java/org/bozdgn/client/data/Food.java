@@ -1,4 +1,4 @@
-package org.bozdgn.model;
+package org.bozdgn.client.data;
 
 public class Food{
     private int fid;

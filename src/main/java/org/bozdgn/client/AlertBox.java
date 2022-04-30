@@ -1,4 +1,4 @@
-package org.bozdgn;
+package org.bozdgn.client;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;

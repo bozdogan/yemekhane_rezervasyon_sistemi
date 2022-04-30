@@ -1,4 +1,4 @@
-package org.bozdgn;
+package org.bozdgn.client;
 
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -6,8 +6,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 
 import javafx.scene.control.cell.PropertyValueFactory;
-import org.bozdgn.model.Purchase;
-import org.bozdgn.model.Reservation;
+import org.bozdgn.client.data.Purchase;
+import org.bozdgn.client.data.Reservation;
 
 import java.net.URL;
 import java.sql.SQLException;
