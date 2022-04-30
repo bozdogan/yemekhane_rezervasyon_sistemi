@@ -142,7 +142,7 @@ public class Userpanel implements Initializable{
                 put(1, App.personId);
                 put(2, meal_id);
                 put(3, refectoryStr);
-            }});;
+            }});
 
             if(_affected>0)
                 updateReservationsTable();
@@ -187,13 +187,11 @@ public class Userpanel implements Initializable{
                 App.database.prepare(query.toString());
                 int _affected = App.database.executeUpdate(null);
 
-                if(_affected>0){
-                    updateReservationsTable();
-                } else{
+                if(_affected <= 0) {
                     // Probably an external interaction is made with the database
                     System.out.println("Rezervasyonu silemedik :/");
-                    updateReservationsTable();
                 }
+                updateReservationsTable();
 
             } catch(SQLException e){ System.out.println("Bir şey oldu: "); e.printStackTrace(); }
         }

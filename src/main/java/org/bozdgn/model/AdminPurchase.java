@@ -21,7 +21,7 @@ public class AdminPurchase{
     public void setPid(String pid){ this.pid = pid; }
 
     public int getMid(){ return mid; }
-    public void setPid(int pid){ this.mid = mid; }
+    public void setMid(int mid){ this.mid = mid; }
 
     public LocalDate getDate(){ return date; }
     public void setDate(LocalDate date){ this.date = date; }

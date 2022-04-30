@@ -8,12 +8,12 @@ import java.util.*;
  * slightly more tolerable. Not saying it succeeds, tho. */
 public class Database implements AutoCloseable{
 
-    private Properties connectionInfo;
+    private final Properties connectionInfo;
     private Connection connection;
 
-    private String serverLocation;
+    private final String serverLocation;
     public String getServerLocation(){ return serverLocation; }
-    private String databaseName;
+    private final String databaseName;
     public String getDatabaseName(){ return databaseName; }
 
     private PreparedStatement statement;
