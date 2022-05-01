@@ -9,7 +9,7 @@ import java.util.*;
 public class Database implements AutoCloseable{
 
     private final Properties connectionInfo;
-    private Connection connection;
+    Connection connection;
 
     private final String serverLocation;
     public String getServerLocation(){ return serverLocation; }
