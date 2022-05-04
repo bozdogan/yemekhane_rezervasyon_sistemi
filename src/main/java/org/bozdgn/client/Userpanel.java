@@ -6,8 +6,9 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 
 import javafx.scene.control.cell.PropertyValueFactory;
-import org.bozdgn.client.data.Purchase;
-import org.bozdgn.client.data.Reservation;
+import org.bozdgn.model.ReservedMeal;
+import org.bozdgn.service.MealService;
+import org.bozdgn.service.ReservationService;
 
 import java.net.URL;
 import java.sql.SQLException;
@@ -30,18 +31,18 @@ public class Userpanel implements Initializable{
 
     @FXML private Button applyBt;
 
-    @FXML private TableView<Reservation> reservationTb;
-    @FXML private TableColumn<Reservation, LocalDate> res_date;
-    @FXML private TableColumn<Reservation, String> res_repast;
-    @FXML private TableColumn<Reservation, String> res_refectory;
+    @FXML private TableView<ReservedMeal> reservationTb;
+    @FXML private TableColumn<ReservedMeal, LocalDate> res_date;
+    @FXML private TableColumn<ReservedMeal, String> res_repast;
+    @FXML private TableColumn<ReservedMeal, String> res_refectory;
 
     @FXML private Button cancelSelectedBt;
     @FXML private Button purchaseBt;
 
-    @FXML private TableView<Purchase> purchaseTb;
-    @FXML private TableColumn<Purchase, LocalDate> purchase_date;
-    @FXML private TableColumn<Purchase, String> purchase_repast;
-    @FXML private TableColumn<Purchase, String> purchase_refectory;
+    @FXML private TableView<ReservedMeal> purchaseTb;
+    @FXML private TableColumn<ReservedMeal, LocalDate> purchase_date;
+    @FXML private TableColumn<ReservedMeal, String> purchase_repast;
+    @FXML private TableColumn<ReservedMeal, String> purchase_refectory;
 
     @FXML private Button changeRefectoryBt;
 
@@ -61,98 +62,59 @@ public class Userpanel implements Initializable{
         purchase_refectory.setCellValueFactory(new PropertyValueFactory<>("refectory"));
         updatePurchaseTable();
 
-
-
     }
 
     @FXML
-    public void addReservation(){
+    public void addReservation() {
         LocalDate resDate = reservationDate.getValue();
 
         String repastStr;
         RadioButton selectedRepast = (RadioButton) repast.getSelectedToggle();
-        if(selectedRepast==repastB) repastStr="B";
-        else if(selectedRepast==repastL) repastStr="L";
-        else if(selectedRepast==repastD) repastStr = "D";
+        if(selectedRepast == repastB) repastStr = "B";
+        else if(selectedRepast == repastL) repastStr = "L";
+        else if(selectedRepast == repastD) repastStr = "D";
         else repastStr = null;
 
         String refectoryStr;
         RadioButton selectedRefectory = (RadioButton) refectory.getSelectedToggle();
-        if(selectedRefectory==refectoryIe) refectoryStr="ieylul";
-        else if(selectedRefectory==refectoryYe) refectoryStr="yemre";
+        if(selectedRefectory == refectoryIe) refectoryStr = "ieylul";
+        else if(selectedRefectory == refectoryYe) refectoryStr = "yemre";
         else refectoryStr = null;
 
-        if(resDate==null || selectedRepast==null || selectedRefectory==null){
+        if(resDate == null || selectedRepast == null || selectedRefectory == null) {
             AlertBox.showWarning("Please fill all the fields.");
             return;
         }
 
-        try{
-            // OBTAIN MEAL ID
-            int meal_id;
-            App.database.prepare("SELECT mid FROM meal WHERE date=? AND repast=?");
-            Map<String, Object> result = App.database.fetch(new HashMap<Integer, Object>(){{
-                 put(1, resDate);
-                 put(2, repastStr);
-            }});
+        // OBTAIN MEAL ID
+        int meal_id = MealService.getMealID(App.database, resDate, repastStr);
+        if(meal_id == -1) { // if meal d.n.e, meal id cannot be obtained.
+            AlertBox.showWarning("No meal available with specified date and repast.");
+            return;
+        }
 
-            if(result.isEmpty()){ // if meal d.n.e, meal id cannot be obtained.
-                AlertBox.showWarning("No meal available with specified date and repast.");
-                return;
-            }
+        // CHECK IF ALREADY RESERVED OR PURCHASED
+        boolean already_on_the_list = ReservationService.isReserved(App.database, App.personId, resDate, repastStr);
 
-            meal_id = (Integer) result.get("mid");
+        if(already_on_the_list) {
+            AlertBox.showWarning("Meal already reserved or purchased:\n" +
+                    "    " + resDate + " " + repastStr);
+            return;
+        }
 
-            // CHECK IF ALREADY RESERVED OR PURCHASED
-            boolean already_on_the_list = false;
-            App.database.prepare("SELECT COUNT(*) as count FROM reservations, meal " +
-                    "WHERE reservations.mid=meal.mid " +
-                    "    AND reservations.pid=? AND meal.date=? ");
+        // ADD RESERVATION ENTRY
+        int affected = ReservationService.makeReservation(App.database,
+                App.personId,
+                meal_id,
+                refectoryStr);
 
-            result = App.database.fetch(new HashMap<Integer, Object>(){{
-                put(1, App.personId);
-                put(2, resDate);
-            }});
-
-            if((Long) result.get("count")>0)
-                already_on_the_list = true;
-
-            App.database.prepare("SELECT COUNT(*) as count FROM has_meal, meal " +
-                    "WHERE has_meal.mid=meal.mid " +
-                    "    AND has_meal.pid=? AND meal.date=? ");
-
-            result = App.database.fetch(new HashMap<Integer, Object>(){{
-                put(1, App.personId);
-                put(2, resDate);
-            }});
-
-            if((Long) result.get("count")>0)
-                already_on_the_list = true;
-
-            if(already_on_the_list){
-                AlertBox.showWarning("Meal already reserved or purchased:\n" +
-                        "    "+resDate+" "+repastStr);
-                return;
-            }
-
-            // ADD RESERVATION ENTRY
-            App.database.prepare("INSERT INTO reservations (pid, mid, refectory) " +
-                    "VALUES (?,?,?)");
-            int _affected = App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                put(1, App.personId);
-                put(2, meal_id);
-                put(3, refectoryStr);
-            }});
-
-            if(_affected>0)
-                updateReservationsTable();
-
-        } catch(SQLException e){ System.out.println("Bir şey oldu: "); e.printStackTrace(); }
+        if(affected > 0)
+            updateReservationsTable();
     }
 
     @FXML
     public void cancelReservation(){
-        ObservableList<Reservation> selectedRes = reservationTb.getSelectionModel().getSelectedItems();
+        ObservableList<ReservedMeal> selectedRes = reservationTb.getSelectionModel().getSelectedItems();
 
         if(selectedRes.size()==0){
             AlertBox.showWarning("No reservations selected.");
@@ -162,38 +124,13 @@ public class Userpanel implements Initializable{
         String confirmationMessage = selectedRes.size()+" reservations selected. " +
                 "These reservations will be cancelled.\n\nProceed?";
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
-            try{
-                // BUILD SQL QUERY
-                StringBuilder query = new StringBuilder("DELETE FROM reservations WHERE " +
-                        "pid="+App.personId+" AND (0");
+            List<ReservedMeal> meals = new ArrayList<>(selectedRes.size());
+            for(ReservedMeal r: selectedRes){
+                meals.add(new ReservedMeal(r.getDate(), r.getRepast(), null));
+            }
 
-                for(Reservation r: selectedRes){
-                        // OBTAIN MEAL ID
-                        int meal_id;
-                        App.database.prepare("SELECT mid FROM meal WHERE date=? AND repast=?");
-                        Map<String, Object> results = App.database.fetch(new HashMap<Integer, Object>(){{
-                            put(1, r.getDate());
-                            put(2, r.getRepast());
-                        }});
-                        meal_id = (Integer) results.get("mid");
-
-                        // EXTEND QUERY
-                        query.append(" OR mid=").append(meal_id);
-                }
-
-                query.append(")");
-
-                // DELETE RESERVATION ENTRIES
-                App.database.prepare(query.toString());
-                int _affected = App.database.executeUpdate(null);
-
-                if(_affected <= 0) {
-                    // Probably an external interaction is made with the database
-                    System.out.println("Rezervasyonu silemedik :/");
-                }
-                updateReservationsTable();
-
-            } catch(SQLException e){ System.out.println("Bir şey oldu: "); e.printStackTrace(); }
+            ReservationService.cancelReservations(App.database, App.personId, meals);
+            updateReservationsTable();
         }
     }
 
@@ -201,13 +138,7 @@ public class Userpanel implements Initializable{
     public void purchaseReservations(){
         try{
             // GET PRICE
-            long resCount;
-            App.database.prepare("SELECT COUNT(mid) as count FROM reservations WHERE pid=?");
-            Map<String, Object> results = App.database.fetch(new HashMap<Integer, Object>(){{
-                put(1, App.personId);
-            }});
-
-            resCount = (Long) results.get("count");
+            long resCount = ReservationService.countUnpaid(App.database, App.personId);
 
             String confirmationMessage = String.format("%d reservations has total price of\n"+
                     "    ₺%.2f\n\nProceed?", resCount, resCount*App.unitPrice);
@@ -255,7 +186,7 @@ public class Userpanel implements Initializable{
 
     @FXML
     public void changeRefectory(){
-        Purchase selected = purchaseTb.getSelectionModel().getSelectedItem();
+        ReservedMeal selected = purchaseTb.getSelectionModel().getSelectedItem();
 
         if(selected==null){
             AlertBox.showWarning("No purchases selected.");
@@ -295,46 +226,14 @@ public class Userpanel implements Initializable{
     }
 
     private void updateReservationsTable(){
-        try{
-            // load the items
-            ArrayList<Reservation> resList = new ArrayList<>();
-            App.database.prepare("SELECT * FROM reservations, meal " +
-                    "WHERE reservations.mid=meal.mid AND pid=?");
-            List<Map<String, Object>> results = App.database.fetchAll(new HashMap<Integer, Object>(){{
-                put(1, App.personId);
-            }});
-
-            for(Map<String, Object> result: results){
-                resList.add(new Reservation(
-                        ((java.sql.Date) result.get("date")).toLocalDate(),
-                        (String) result.get("repast"),
-                        (String) result.get("refectory")
-                ));
-            }
-
-            reservationTb.getItems().setAll(resList);
-        } catch(SQLException e){ e.printStackTrace(); }
+        // load the items
+        List<ReservedMeal> resList = ReservationService.listUnpaid(App.database, App.personId);
+        reservationTb.getItems().setAll(resList);
     }
 
     private void updatePurchaseTable(){
-        try{
-            // load the items
-            ArrayList<Purchase> purchaseList = new ArrayList<>();
-            App.database.prepare("SELECT * FROM has_meal, meal " +
-                    "WHERE has_meal.mid=meal.mid AND pid=?");
-            List<Map<String, Object>> results = App.database.fetchAll(new HashMap<Integer, Object>(){{
-                put(1, App.personId);
-            }});
-
-            for(Map<String, Object> result: results){
-                purchaseList.add(new Purchase(
-                        ((java.sql.Date) result.get("date")).toLocalDate(),
-                        (String) result.get("repast"),
-                        (String) result.get("refectory")
-                ));
-            }
-
-            purchaseTb.getItems().setAll(purchaseList);
-        } catch(SQLException e){ e.printStackTrace(); }
+        // load the items
+        List<ReservedMeal> purchaseList = ReservationService.listPaid(App.database, App.personId);
+        purchaseTb.getItems().setAll(purchaseList);
     }
 }
