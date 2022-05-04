@@ -1,6 +1,7 @@
 package org.bozdgn.service;
 
-import org.bozdgn.model.ReservedMeal;
+import org.bozdgn.client.App;
+import org.bozdgn.model.Reservation;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -28,7 +29,7 @@ public class ReservationService {
             st.setString(3, repast);
 
             ResultSet rs = st.executeQuery();
-            
+
             if(rs.next()) {
                 int count = rs.getInt(1);
                 return count > 0;
@@ -75,15 +76,12 @@ public class ReservationService {
 
         try(PreparedStatement st = conn.prepareStatement(
                 "DELETE FROM reservations WHERE pid=? AND mid=?")) {
+
             int mid = MealService.getMealID(db, date, repast);
             st.setString(1, pid);
             st.setInt(2, mid);
 
-            int affected = st.executeUpdate();
-            if(affected <= 0) {
-                // Probably an external interaction is made with the database
-            }
-
+            st.executeUpdate();
         } catch(SQLException e) {
             e.printStackTrace();
         }
@@ -92,7 +90,7 @@ public class ReservationService {
     public static void cancelReservations(
             Database db,
             String pid,
-            List<ReservedMeal> meals
+            List<Reservation> meals
     ) {
 
         Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
@@ -105,7 +103,7 @@ public class ReservationService {
             st.setString(1, pid);
 
             for(int i = 0; i < meals.size(); ++i) {
-                ReservedMeal it = meals.get(i);
+                Reservation it = meals.get(i);
                 int mid = MealService.getMealID(db, it.getDate(), it.getRepast());
                 st.setInt(i + 2, mid);
             }
@@ -116,16 +114,44 @@ public class ReservationService {
         }
     }
 
-    public static void purchaseReservation(
+    public static void makeSinglePurchase(
             Database db,
             String pid,
             int mid
     ) {
         Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
 
-        try(PreparedStatement st = conn.prepareStatement(
-                "")) {
-            
+        // TODO(bora): This should've been just a flag in the table. Not an entire table
+        // with the same fields. A design oversight from young me..
+        try(PreparedStatement stSel = conn.prepareStatement(
+                "SELECT refectory FROM reservations WHERE pid=? AND mid=?")) {
+            stSel.setString(1, pid);
+            stSel.setInt(2, mid);
+
+            ResultSet rs = stSel.executeQuery();
+            if(!rs.next()) {
+                // NOTE(bora): Reservation not found. Skip the rest.
+                return;
+            }
+            String refectory = rs.getString(1);
+
+            try(PreparedStatement stIns = conn.prepareStatement(
+                        "INSERT INTO has_meal (pid, mid, refectory) " +
+                                "VALUES (?,?,?)")) {
+
+                stIns.setString(1, pid);
+                stIns.setInt(2, mid);
+                stIns.setString(3, refectory);
+
+                if(stIns.executeUpdate() > 0) {
+                    try(PreparedStatement stDel = conn.prepareStatement(
+                            "DELETE FROM reservations WHERE pid=?")) {
+
+                        stDel.setString(1, pid);
+                        stDel.executeUpdate();
+                    }
+                }
+            }
         } catch(SQLException e) {
             e.printStackTrace();
         }
@@ -146,7 +172,6 @@ public class ReservationService {
             if(rs.next()) {
                 return rs.getInt(1);
             }
-            
         } catch(SQLException e) {
             e.printStackTrace();
         }
@@ -155,26 +180,27 @@ public class ReservationService {
     }
 
     /** Returns a list of reservations made by given person that are not purchased yet. */
-    public static List<ReservedMeal> listUnpaid(
+    public static List<Reservation> listUnpaid(
             Database db,
             String pid
     ) {
         Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
 
         try(PreparedStatement st = conn.prepareStatement(
-                "SELECT date, repast, refectory "
+                "SELECT reservateion.mid, date, repast, refectory "
                     + "FROM reservations JOIN meal ON reservations.mid = meal.mid "
                     + "WHERE pid=?")) {
 
             st.setString(1, pid);
             ResultSet rs = st.executeQuery();
 
-            List<ReservedMeal> result = new ArrayList<>();
+            List<Reservation> result = new ArrayList<>();
             while(rs.next()) {
-                result.add(new ReservedMeal(
-                        rs.getDate(1).toLocalDate(),
-                        rs.getString(2),
-                        rs.getString(3)));
+                result.add(new Reservation(
+                        rs.getInt(1),
+                        rs.getDate(2).toLocalDate(),
+                        rs.getString(3),
+                        rs.getString(4)));
             }
 
             return result;
@@ -183,11 +209,11 @@ public class ReservationService {
             e.printStackTrace();
         }
 
-        return null;
+        return null;  // TODO(bora): Handle errors properly so we can guarantee non-null return.
     }
 
     /** Returns a list of reservations bought by given person. */
-    public static List<ReservedMeal> listPaid(
+    public static List<Reservation> listPaid(
             Database db,
             String pid
     ) {
@@ -201,9 +227,9 @@ public class ReservationService {
             st.setString(1, pid);
             ResultSet rs = st.executeQuery();
 
-            List<ReservedMeal> result = new ArrayList<>();
+            List<Reservation> result = new ArrayList<>();
             while(rs.next()) {
-                result.add(new ReservedMeal(
+                result.add(new Reservation(
                         rs.getDate(1).toLocalDate(),
                         rs.getString(2),
                         rs.getString(3)));
@@ -215,7 +241,7 @@ public class ReservationService {
             e.printStackTrace();
         }
 
-        return null;
+        return null;  // TODO(bora): Handle errors properly so we can guarantee non-null return.
     }
 
     public static void changeReservationRefectory(
@@ -227,11 +253,14 @@ public class ReservationService {
         Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
 
         try(PreparedStatement st = conn.prepareStatement(
-                "")) {
-            
+                "UPDATE has_meal SET refectory=? WHERE pid=? AND mid=?")) {
+
+            st.setString(1, newRefectory);
+            st.setString(2, pid);
+            st.setInt(3, mid);
+
         } catch(SQLException e) {
             e.printStackTrace();
         }
     }
-
 }

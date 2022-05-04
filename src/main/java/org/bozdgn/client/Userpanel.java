@@ -6,7 +6,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 
 import javafx.scene.control.cell.PropertyValueFactory;
-import org.bozdgn.model.ReservedMeal;
+import org.bozdgn.model.Reservation;
 import org.bozdgn.service.MealService;
 import org.bozdgn.service.ReservationService;
 
@@ -31,18 +31,18 @@ public class Userpanel implements Initializable{
 
     @FXML private Button applyBt;
 
-    @FXML private TableView<ReservedMeal> reservationTb;
-    @FXML private TableColumn<ReservedMeal, LocalDate> res_date;
-    @FXML private TableColumn<ReservedMeal, String> res_repast;
-    @FXML private TableColumn<ReservedMeal, String> res_refectory;
+    @FXML private TableView<Reservation> reservationTb;
+    @FXML private TableColumn<Reservation, LocalDate> res_date;
+    @FXML private TableColumn<Reservation, String> res_repast;
+    @FXML private TableColumn<Reservation, String> res_refectory;
 
     @FXML private Button cancelSelectedBt;
     @FXML private Button purchaseBt;
 
-    @FXML private TableView<ReservedMeal> purchaseTb;
-    @FXML private TableColumn<ReservedMeal, LocalDate> purchase_date;
-    @FXML private TableColumn<ReservedMeal, String> purchase_repast;
-    @FXML private TableColumn<ReservedMeal, String> purchase_refectory;
+    @FXML private TableView<Reservation> purchaseTb;
+    @FXML private TableColumn<Reservation, LocalDate> purchase_date;
+    @FXML private TableColumn<Reservation, String> purchase_repast;
+    @FXML private TableColumn<Reservation, String> purchase_refectory;
 
     @FXML private Button changeRefectoryBt;
 
@@ -114,7 +114,7 @@ public class Userpanel implements Initializable{
 
     @FXML
     public void cancelReservation(){
-        ObservableList<ReservedMeal> selectedRes = reservationTb.getSelectionModel().getSelectedItems();
+        ObservableList<Reservation> selectedRes = reservationTb.getSelectionModel().getSelectedItems();
 
         if(selectedRes.size()==0){
             AlertBox.showWarning("No reservations selected.");
@@ -124,9 +124,9 @@ public class Userpanel implements Initializable{
         String confirmationMessage = selectedRes.size()+" reservations selected. " +
                 "These reservations will be cancelled.\n\nProceed?";
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
-            List<ReservedMeal> meals = new ArrayList<>(selectedRes.size());
-            for(ReservedMeal r: selectedRes){
-                meals.add(new ReservedMeal(r.getDate(), r.getRepast(), null));
+            List<Reservation> meals = new ArrayList<>(selectedRes.size());
+            for(Reservation r: selectedRes){
+                meals.add(new Reservation(r.getDate(), r.getRepast(), null));
             }
 
             ReservationService.cancelReservations(App.database, App.personId, meals);
@@ -136,104 +136,53 @@ public class Userpanel implements Initializable{
 
     @FXML
     public void purchaseReservations(){
-        try{
-            // GET PRICE
-            long resCount = ReservationService.countUnpaid(App.database, App.personId);
+        // GET PRICE
+        long resCount = ReservationService.countUnpaid(App.database, App.personId);
+        String confirmationMessage = String.format("%d reservations has total price of\n"+
+                "    ₺%.2f\n\nProceed?", resCount, resCount*App.unitPrice);
 
-            String confirmationMessage = String.format("%d reservations has total price of\n"+
-                    "    ₺%.2f\n\nProceed?", resCount, resCount*App.unitPrice);
-            if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
+        if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
 
-                // GET RESERVATION INFO
-                Map result = App.database.prepare("SELECT * FROM reservations WHERE pid=?").fetch(
-                        new HashMap<Integer, Object>(){{put(1, App.personId);}}
-                );
-
-                int res_mid = (Integer) result.get("mid");
-                String res_ref = (String) result.get("refectory");
-
-                // DELETE RESERVATION ENTRY
-                App.database.prepare("DELETE FROM reservations WHERE pid=?");
-                int _affected_delete = App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                    put(1, App.personId);
-                }});
-
-                // ADD PURCHASE ENTRY
-                App.database.prepare("INSERT INTO has_meal (pid, mid, refectory) " +
-                        "VALUES (?,?,?)");
-                int _affected_insert = App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                    put(1, App.personId);
-                    put(2, res_mid);
-                    put(3, res_ref);
-                }});
-
-                // :/
-                if(_affected_delete!=_affected_insert)
-                    System.out.println("Bir şey oldu...");
-
-                // REFRESH
-                if(_affected_insert>0){
-                    updateReservationsTable();
-                    updatePurchaseTable();
-                }
+            for(Reservation it: ReservationService.listUnpaid(App.database, App.personId)) {
+                ReservationService.makeSinglePurchase(App.database, App.personId, it.getMid());
             }
 
-        } catch(SQLIntegrityConstraintViolationException e){ // Duplicate entry error
             updateReservationsTable();
             updatePurchaseTable();
-        } catch(SQLException e){ System.out.println("Bir şey oldu: "); e.printStackTrace(); }
+        }
     }
 
     @FXML
     public void changeRefectory(){
-        ReservedMeal selected = purchaseTb.getSelectionModel().getSelectedItem();
+        Reservation selected = purchaseTb.getSelectionModel().getSelectedItem();
 
-        if(selected==null){
+        if(selected == null){
             AlertBox.showWarning("No purchases selected.");
             return;
         }
 
-        try{
-            String newRefectory = selected.getRefectory().equals("ieylul") ? "yemre" : "ieylul";
+        String newRefectory = selected.getRefectory().equals("ieylul") ? "yemre" : "ieylul";
+        String confirmationMessage = String.format("Current refectory is %s, you will change it with:\n"+
+                "    %s\n\nProceed?", selected.getRefectory(), newRefectory);
 
-            String confirmationMessage = String.format("Current refectory is %s, you will change it with:\n"+
-                    "    %s\n\nProceed?", selected.getRefectory(), newRefectory);
-            if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
+        if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
 
-                // OBTAIN MEAL ID
-                int meal_id;
-                App.database.prepare("SELECT mid FROM meal WHERE date=? AND repast=?");
-                Map<String, Object> results = App.database.fetch(new HashMap<Integer, Object>(){{
-                    put(1, selected.getDate());
-                    put(2, selected.getRepast());
-                }});
+            int mid = MealService.getMealID(App.database, selected.getDate(), selected.getRepast());
+            ReservationService.changeReservationRefectory(App.database, App.personId, mid, newRefectory);
 
-                meal_id = (Integer) results.get("mid");
-
-                // SET NEW REFECTORY
-                App.database.prepare("UPDATE has_meal SET refectory=? WHERE pid=? AND mid=?");
-                int _affected = App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                    put(1, newRefectory);
-                    put(2, App.personId);
-                    put(3, meal_id);
-                }});
-
-                if(_affected>0){
-                    updatePurchaseTable();
-                }
-            }
-        } catch(SQLException e){ e.printStackTrace(); }
+                updatePurchaseTable();
+        }
     }
 
     private void updateReservationsTable(){
         // load the items
-        List<ReservedMeal> resList = ReservationService.listUnpaid(App.database, App.personId);
+        List<Reservation> resList = ReservationService.listUnpaid(App.database, App.personId);
         reservationTb.getItems().setAll(resList);
     }
 
     private void updatePurchaseTable(){
         // load the items
-        List<ReservedMeal> purchaseList = ReservationService.listPaid(App.database, App.personId);
+        List<Reservation> purchaseList = ReservationService.listPaid(App.database, App.personId);
         purchaseTb.getItems().setAll(purchaseList);
     }
 }

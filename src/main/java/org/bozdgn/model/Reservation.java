@@ -2,15 +2,31 @@ package org.bozdgn.model;
 
 import java.time.LocalDate;
 
-public class ReservedMeal {
+public class Reservation {
+    /** Only valid if positive */
+    int mid;
     LocalDate date;
     String repast;
     String refectory;
 
-    public ReservedMeal( LocalDate date, String repast, String refectory) {
+    public Reservation(LocalDate date, String repast, String refectory) {
+        this.mid = -1;
         this.date = date;
         this.repast = repast;
         this.refectory = refectory;
+    }
+
+    public Reservation(int mid, LocalDate date, String repast, String refectory) {
+        this.mid = mid;
+        this.date = date;
+        this.repast = repast;
+        this.refectory = refectory;
+    }
+
+    public int getMid() {
+        return mid >= 0
+                ? mid
+                : -1;
     }
 
 
