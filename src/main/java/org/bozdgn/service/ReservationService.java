@@ -187,7 +187,7 @@ public class ReservationService {
         Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
 
         try(PreparedStatement st = conn.prepareStatement(
-                "SELECT reservateion.mid, date, repast, refectory "
+                "SELECT reservations.mid, date, repast, refectory "
                     + "FROM reservations JOIN meal ON reservations.mid = meal.mid "
                     + "WHERE pid=?")) {
 
