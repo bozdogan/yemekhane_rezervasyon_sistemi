@@ -121,8 +121,7 @@ public class ReservationService {
     ) {
         Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
 
-        // TODO(bora): This should've been just a flag in the table. Not an entire table
-        // with the same fields. A design oversight from young me..
+        // TODO(bora): This should've been just a flag in the table.
         try(PreparedStatement stSel = conn.prepareStatement(
                 "SELECT refectory FROM reservations WHERE pid=? AND mid=?")) {
             stSel.setString(1, pid);
@@ -145,14 +144,17 @@ public class ReservationService {
 
                 if(stIns.executeUpdate() > 0) {
                     try(PreparedStatement stDel = conn.prepareStatement(
-                            "DELETE FROM reservations WHERE pid=?")) {
+                            "DELETE FROM reservations WHERE pid=? AND mid=?")) {
 
                         stDel.setString(1, pid);
+                        stDel.setInt(2, mid);
                         stDel.executeUpdate();
                     }
                 }
             }
-        } catch(SQLException e) {
+        } catch(SQLIntegrityConstraintViolationException e) {
+            // NOTE(bora): It's already inserted. Do nothing.
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -258,6 +260,8 @@ public class ReservationService {
             st.setString(1, newRefectory);
             st.setString(2, pid);
             st.setInt(3, mid);
+
+            st.executeUpdate();
 
         } catch(SQLException e) {
             e.printStackTrace();
