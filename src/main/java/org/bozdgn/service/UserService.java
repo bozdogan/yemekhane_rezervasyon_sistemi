@@ -12,7 +12,7 @@ public class UserService {
         }
 
         try(PreparedStatement st = db.connection.prepareStatement(
-                "SELECT (pid, firstname, lastname) FROM users WHERE pid=? AND password=?")
+                "SELECT pid, firstname, lastname FROM users WHERE pid=? AND password=?")
         ) {
             st.setString(1, pid);
             st.setString(2, password);
