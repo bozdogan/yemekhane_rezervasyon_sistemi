@@ -8,13 +8,15 @@ import javafx.scene.control.*;
 
 import java.net.URL;
 import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.LocalDate;
 import java.util.*;
 
 import javafx.scene.control.cell.PropertyValueFactory;
 import org.bozdgn.client.data.*;
+import org.bozdgn.model.Reservation;
 import org.bozdgn.model.ReservedMeal;
+import org.bozdgn.service.FoodService;
+import org.bozdgn.service.MealService;
 import org.bozdgn.service.ReservationService;
 
 public class Adminpanel implements Initializable{
@@ -156,17 +158,16 @@ public class Adminpanel implements Initializable{
                 "These reservations will be cancelled.\n\nProceed?";
 
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
-            List<org.bozdgn.model.ReservedMeal> meals = new ArrayList<>(selectedRes.size());
+            List<Reservation> meals = new ArrayList<>(selectedRes.size());
             for(ReservedMeal r: selectedRes){
-                meals.add(new org.bozdgn.model.ReservedMeal(
+                // NOTE(bora): `refectory` is not needed to delete.
+                meals.add(new org.bozdgn.model.Reservation(
                         r.getPid(),
                         r.getMid(),
-                        r.getDate(),
-                        r.getRepast(),
-                        r.getRefectory()));
+                        null));
             }
 
-            ReservationService.batchCancelReservations(App.database, meals);
+            ReservationService.batchCancelReservationsByIDs(App.database, meals);
             updateReservationsTable();
         }
     }
@@ -184,80 +185,12 @@ public class Adminpanel implements Initializable{
         String confirmationMessage = String.format("%d reservations will be marked as purchased." +
                 "\n\nProceed?", numberOfSelectedItems);
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
-            try{
-                for(ReservedMeal res: selectedRes){
+            for(ReservedMeal it: selectedRes) {
+                ReservationService.makePurchase(App.database, it.getPid(), it.getMid());
+            }
 
-                    // DELETE RESERVATION ENTRY
-                    App.database.prepare("DELETE FROM reservations " +
-                            "WHERE pid=? AND mid=? AND refectory=?");
-                    int _affected_delete = App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                        put(1, res.getPid());
-                        put(2, res.getMid());
-                        put(3, res.getRefectory());
-                    }});
-
-                    // ADD PURCHASE ENTRY
-                    App.database.prepare("INSERT INTO has_meal (pid, mid, refectory) "+
-                            "VALUES (?,?,?)");
-                    int _affected_insert = App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                        put(1, res.getPid());
-                        put(2, res.getMid());
-                        put(3, res.getRefectory());
-                    }});
-
-                    // :/
-                    if(_affected_delete!=_affected_insert)
-                        System.out.println("Bir şey oldu Amdin Bey..");
-
-                    // REFRESH
-                    if(_affected_insert>0){
-                        System.out.println(numberOfSelectedItems+" reservations have marked as purchased.");
-                        updateReservationsTable();
-                        updatePurchaseTable();
-                    }
-                }
-            } catch(SQLIntegrityConstraintViolationException e){ // Duplicate entry error
-                updateReservationsTable();
-                updatePurchaseTable();
-            } catch(SQLException e){ System.out.println("Bir şey oldu: ");e.printStackTrace(); }
-        }
-    }
-
-    @FXML
-    public void removeReservations(){
-        ObservableList<ReservedMeal> selectedRes = purchaseTb.getSelectionModel().getSelectedItems();
-        int numberOfSelectedItems = selectedRes.size();
-
-        if(numberOfSelectedItems==0){
-            AlertBox.showWarning("No reservations selected.");
-            return;
-        }
-
-        String confirmationMessage = String.format("%d reservations will be removed." +
-                "\n\nProceed?", numberOfSelectedItems);
-        if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
-            try{
-                int failCount = 0;
-
-                App.database.prepare("DELETE FROM reservations WHERE pid=? AND mid=? AND refectory=?");
-                for(ReservedMeal purchase: selectedRes){
-                    int _affected = App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                        put(1, purchase.getPid());
-                        put(2, purchase.getMid());
-                        put(3, purchase.getRefectory());
-                    }});
-
-                    if(_affected<1){
-                        failCount++;
-                    }
-                }
-
-                if(failCount>0){
-                    AlertBox.showWarning(failCount+" operations have failed.");
-                }
-
-                updateReservationsTable();
-            } catch(SQLException e){ e.printStackTrace(); }
+            updateReservationsTable();
+            updatePurchaseTable();
         }
     }
 
@@ -285,28 +218,17 @@ public class Adminpanel implements Initializable{
         String confirmationMessage = String.format("Refectory of %d meals will be changed to:\n" +
                 "    %s\n\nProceed?", numberOfSelectedItems, newRefectory);
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
-            try{
-                int failCount = 0;
+            List<Reservation> meals = new ArrayList<>(selectedPurchases.size());
+            for(ReservedMeal r: selectedPurchases){
+                // NOTE(bora): `refectory` is not needed to delete.
+                meals.add(new Reservation(
+                        r.getPid(),
+                        r.getMid(),
+                        null));
+            }
 
-                App.database.prepare("UPDATE has_meal SET refectory=? WHERE pid=? AND mid=?");
-                for(ReservedMeal purchase: selectedPurchases){
-                    int _affected = App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                        put(1, newRefectory);
-                        put(2, purchase.getPid());
-                        put(3, purchase.getMid());
-                    }});
-
-                    if(_affected<1){
-                        failCount++;
-                    }
-                }
-
-                if(failCount>0){
-                    AlertBox.showWarning(failCount+" operations have failed.");
-                }
-
-                updatePurchaseTable();
-            } catch(SQLException e){ e.printStackTrace(); }
+            ReservationService.batchChangeReservationRefectory(App.database, meals, newRefectory);
+            updateReservationsTable();
         }
     }
 
@@ -323,28 +245,17 @@ public class Adminpanel implements Initializable{
         String confirmationMessage = String.format("%d purchases will be removed." +
                 "\n\nProceed?", numberOfSelectedItems);
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
-            try{
-                int failCount = 0;
+            List<Reservation> meals = new ArrayList<>(selectedPurchases.size());
+            for(ReservedMeal r: selectedPurchases){
+                // NOTE(bora): `refectory` is not needed to delete.
+                meals.add(new org.bozdgn.model.Reservation(
+                        r.getPid(),
+                        r.getMid(),
+                        null));
+            }
 
-                App.database.prepare("DELETE FROM has_meal WHERE pid=? AND mid=? AND refectory=?");
-                for(ReservedMeal purchase: selectedPurchases){
-                    int _affected = App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                        put(1, purchase.getPid());
-                        put(2, purchase.getMid());
-                        put(3, purchase.getRefectory());
-                    }});
-
-                    if(_affected<1){
-                        failCount++;
-                    }
-                }
-
-                if(failCount>0){
-                    AlertBox.showWarning(failCount+" operations have failed.");
-                }
-
-                updatePurchaseTable();
-            } catch(SQLException e){ e.printStackTrace(); }
+            ReservationService.batchRemovePurchaseByIDs(App.database, meals);
+            updatePurchaseTable();
         }
     }
 
@@ -357,21 +268,9 @@ public class Adminpanel implements Initializable{
         Meal selectedMeal = mealsTb.getSelectionModel().getSelectedItem();
         String confirmationMessage = String.format("Meal will be removed:\n" +
                 "     %s %s\n\nProceed?", selectedMeal.getDate(), selectedMeal.getRepast());
+
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
-            try{
-                App.database.prepare("DELETE FROM meal WHERE mid=?");
-
-                int _affected = App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                    put(1, selectedMeal.getMid());
-                }});
-
-                if(_affected<1){
-                    AlertBox.showWarning("Operation has failed.");
-                }
-
-                updateMealsTable();
-
-            } catch(SQLException e){ e.printStackTrace(); }
+            MealService.removeMealByID(App.database, selectedMeal.getMid());
         }
     }
 
@@ -397,64 +296,21 @@ public class Adminpanel implements Initializable{
         else if(selectedRepast==repastD) repastStr = "D";
         else repastStr = null;
 
-        int food1Str = add_foodCb1.getSelectionModel().getSelectedItem().getFid();
-        int food2Str = add_foodCb2.getSelectionModel().getSelectedItem().getFid();
-        int food3Str = add_foodCb3.getSelectionModel().getSelectedItem().getFid();
-        int food4Str = add_foodCb4.getSelectionModel().getSelectedItem().getFid();
+        int food1ID = add_foodCb1.getSelectionModel().getSelectedItem().getFid();
+        int food2ID = add_foodCb2.getSelectionModel().getSelectedItem().getFid();
+        int food3ID = add_foodCb3.getSelectionModel().getSelectedItem().getFid();
+        int food4ID = add_foodCb4.getSelectionModel().getSelectedItem().getFid();
 
-        boolean _success_meal, _success_has_food;
 
-        try{
-            // Insert meal entry
-            App.database.prepare("INSERT INTO meal (date, repast) VALUES (?,?)");
+        MealService.addMeal(App.database, mealDate, repastStr);
+        int mealID = MealService.getMealID(App.database, mealDate, repastStr);
 
-            _success_meal = App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                put(1, mealDate);
-                put(2, repastStr);
-            }})>0;
+        MealService.addMealFood(App.database, mealID, food1ID);
+        MealService.addMealFood(App.database, mealID, food2ID);
+        MealService.addMealFood(App.database, mealID, food3ID);
+        MealService.addMealFood(App.database, mealID, food4ID);
 
-            // OBTAIN MEAL ID
-            int meal_id;
-            App.database.prepare("SELECT mid FROM meal WHERE date=? AND repast=?");
-            Map<String, Object> result = App.database.fetch(new HashMap<Integer, Object>(){{
-                put(1, mealDate);
-                put(2, repastStr);
-            }});
-
-            meal_id = (Integer) result.get("mid");
-
-            // Insert food relations
-            App.database.prepare("INSERT INTO has_food (mid, fid) VALUES (?,?)");
-
-            _success_has_food = App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                put(1, meal_id);
-                put(2, food1Str);
-            }})>0;
-            _success_has_food = App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                put(1, meal_id);
-                put(2, food2Str);
-            }})>0 && _success_has_food;
-            _success_has_food = App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                put(1, meal_id);
-                put(2, food3Str);
-            }})>0 && _success_has_food;
-            _success_has_food = App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                put(1, meal_id);
-                put(2, food4Str);
-            }})>0 && _success_has_food;
-
-            if(!_success_has_food){
-                App.database.prepare("DELETE ROM has_food WHERE mid="+meal_id).execute();
-            }
-
-            if(!(_success_meal && _success_has_food)){
-                AlertBox.showWarning("Operation(s) failed.");
-            }
-
-            updateMealsTable();
-
-        } catch(SQLException e){ e.printStackTrace(); }
-
+        updateMealsTable();
     }
 
     @FXML
@@ -470,26 +326,11 @@ public class Adminpanel implements Initializable{
         String confirmationMessage = String.format("%d foods will be removed." +
                 "\n\nProceed?", numberOfSelectedItems);
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
-            try{
-                int failCount = 0;
+            for(Food it: selectedFoods) {
+                FoodService.removeFood(App.database, it.getFid());
+            }
 
-                App.database.prepare("DELETE FROM food WHERE fid=?");
-                for(Food food: selectedFoods){
-                    int _affected = App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                        put(1, food.getFid());
-                    }});
-
-                    if(_affected<1){
-                        failCount++;
-                    }
-                }
-
-                if(failCount>0){
-                    AlertBox.showWarning(failCount+" operations have failed.");
-                }
-
-                updateFoodsTable();
-            } catch(SQLException e){ e.printStackTrace(); }
+            updateFoodsTable();
         }}
 
     @FXML
@@ -499,19 +340,7 @@ public class Adminpanel implements Initializable{
         if(foodName.equals(""))
             return;
 
-        try{
-            // Insert meal entry
-            App.database.prepare("INSERT INTO food (food_name) VALUES (?)");
-
-            if(App.database.executeUpdate(new HashMap<Integer, Object>(){{
-                put(1, foodName);
-            }})==0){
-                System.out.println("Olmadi..");
-            }
-
-            updateFoodsTable();
-
-        } catch(SQLException e){ e.printStackTrace(); }
+        FoodService.addFood(App.database, foodName);
     }
 
 
@@ -638,40 +467,15 @@ public class Adminpanel implements Initializable{
     }
 
     private void updateMealsTable(){
-        try{
-            ArrayList<Meal> mealList = new ArrayList<>();
-            App.database.prepare("SELECT mid, date, repast FROM meal");
-            List<Map<String, Object>> results = App.database.fetchAll(null);
-
-            for(Map<String, Object> result: results){
-                mealList.add(new Meal(
-                        (Integer) result.get("mid"),
-                        ((java.sql.Date) result.get("date")).toLocalDate(),
-                        (String) result.get("repast")
-                ));
-            }
-
-            mealsTb.getItems().setAll(mealList);
-        } catch(SQLException e){ e.printStackTrace(); }
+        List<Meal> mealList = MealService.listMeals(App.database);
+        mealsTb.getItems().setAll(mealList);
     }
 
     @FXML
     private void updateFoodsTable(){
-        try{
-            ArrayList<Food> foodList = new ArrayList<>();
-            App.database.prepare("SELECT fid, food_name FROM food");
-            List<Map<String, Object>> results = App.database.fetchAll(null);
-
-            for(Map<String, Object> result: results){
-                foodList.add(new Food(
-                        (Integer) result.get("fid"),
-                        (String) result.get("food_name")
-                ));
-            }
-
-            foodsTb.getItems().setAll(foodList);
-            updateFoodFields();
-        } catch(SQLException e){ e.printStackTrace(); }
+        List<Food> foodList = FoodService.listFoods(App.database);
+        foodsTb.getItems().setAll(foodList);
+        updateFoodFields();
     }
 
     private void updateFoodFields(){
@@ -694,37 +498,12 @@ public class Adminpanel implements Initializable{
     private void fetchFoodsOfMeal(){
         Meal selectedMeal = mealsTb.getSelectionModel().getSelectedItem();
 
-        try{
-            updateFoodFields();
+        updateFoodFields();
 
-            App.database.prepare("SELECT food.fid, food_name FROM food, has_food" +
-                    " WHERE food.fid=has_food.fid AND mid=?");
-
-            List<Map<String, Object>> results = App.database.fetchAll(new HashMap<Integer, Object>(){{
-                put(1, selectedMeal.getMid());
-            }});
-
-            meal_foodCb1.getSelectionModel().select(new Food(
-                    (Integer) results.get(0).get("fid"),
-                    (String) results.get(0).get("food_name")
-            ));
-
-            meal_foodCb2.getSelectionModel().select(new Food(
-                    (Integer) results.get(1).get("fid"),
-                    (String) results.get(1).get("food_name")
-            ));
-
-            meal_foodCb3.getSelectionModel().select(new Food(
-                    (Integer) results.get(2).get("fid"),
-                    (String) results.get(2).get("food_name")
-            ));
-
-            meal_foodCb4.getSelectionModel().select(new Food(
-                    (Integer) results.get(3).get("fid"),
-                    (String) results.get(3).get("food_name")
-            ));
-
-        }catch(SQLException e){ e.printStackTrace();}
-
+        List<Food> foods = MealService.getFoods(App.database, selectedMeal.getMid());
+        meal_foodCb1.getSelectionModel().select(foods.get(0));
+        meal_foodCb2.getSelectionModel().select(foods.get(2));
+        meal_foodCb3.getSelectionModel().select(foods.get(3));
+        meal_foodCb4.getSelectionModel().select(foods.get(4));
     }
 }

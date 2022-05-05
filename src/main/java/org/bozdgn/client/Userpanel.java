@@ -127,7 +127,7 @@ public class Userpanel implements Initializable{
                 meals.add(new ReservedMeal(r.getDate(), r.getRepast(), null));
             }
 
-            ReservationService.batchCancelReservations(App.database, App.personId, meals);
+            ReservationService.batchCancelReservationsByIDs(App.database, App.personId, meals);
             updateReservationsTable();
         }
     }

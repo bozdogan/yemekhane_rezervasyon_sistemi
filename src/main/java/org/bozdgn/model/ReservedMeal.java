@@ -10,13 +10,13 @@ public class ReservedMeal {
     String repast;
     String refectory;
 
-    boolean _is_complete_view;
+    boolean _is_complete;
 
 
     public ReservedMeal(LocalDate date, String repast, String refectory) {
         this.pid = null;
         this.mid = -1;
-        _is_complete_view = false;
+        _is_complete = false;
 
         this.date = date;
         this.repast = repast;
@@ -24,7 +24,10 @@ public class ReservedMeal {
     }
 
     public ReservedMeal(String pid, int mid, LocalDate date, String repast, String refectory) {
+        this.pid = pid;
         this.mid = mid;
+        this._is_complete = pid != null && mid >= 0;
+
         this.date = date;
         this.repast = repast;
         this.refectory = refectory;
@@ -43,8 +46,8 @@ public class ReservedMeal {
 
     /** If this model is used on user panel, then it doesn't have to have
      * `pid` and `mid` fields. This flag specifies if those fields are valid. */
-    public boolean isCompleteView() {
-        return _is_complete_view;
+    public boolean isComplete() {
+        return _is_complete;
     }
 
     public LocalDate getDate() {
