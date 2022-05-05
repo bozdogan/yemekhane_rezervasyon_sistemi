@@ -14,26 +14,28 @@ import java.util.*;
 
 import javafx.scene.control.cell.PropertyValueFactory;
 import org.bozdgn.client.data.*;
+import org.bozdgn.model.ReservedMeal;
+import org.bozdgn.service.ReservationService;
 
 public class Adminpanel implements Initializable{
 
-    @FXML private TableView<AdminReservation> reservationTb;
-    @FXML private TableColumn<AdminReservation, String> reservation_pid;
-    @FXML private TableColumn<AdminReservation, Integer> reservation_mid;
-    @FXML private TableColumn<AdminReservation, LocalDate> reservation_date;
-    @FXML private TableColumn<AdminReservation, String> reservation_repast;
-    @FXML private TableColumn<AdminReservation, String> reservation_refectory;
+    @FXML private TableView<ReservedMeal> reservationTb;
+    @FXML private TableColumn<ReservedMeal, String> reservation_pid;
+    @FXML private TableColumn<ReservedMeal, Integer> reservation_mid;
+    @FXML private TableColumn<ReservedMeal, LocalDate> reservation_date;
+    @FXML private TableColumn<ReservedMeal, String> reservation_repast;
+    @FXML private TableColumn<ReservedMeal, String> reservation_refectory;
 
     @FXML private Button man_cancelResBt;
     @FXML private Button man_purchaseBt;
     @FXML private Button man_removeResBt;
 
-    @FXML private TableView<AdminPurchase> purchaseTb;
-    @FXML private TableColumn<AdminPurchase, String> purchase_pid;
-    @FXML private TableColumn<AdminPurchase, Integer> purchase_mid;
-    @FXML private TableColumn<AdminPurchase, LocalDate> purchase_date;
-    @FXML private TableColumn<AdminPurchase, String> purchase_repast;
-    @FXML private TableColumn<AdminPurchase, String> purchase_refectory;
+    @FXML private TableView<ReservedMeal> purchaseTb;
+    @FXML private TableColumn<ReservedMeal, String> purchase_pid;
+    @FXML private TableColumn<ReservedMeal, Integer> purchase_mid;
+    @FXML private TableColumn<ReservedMeal, LocalDate> purchase_date;
+    @FXML private TableColumn<ReservedMeal, String> purchase_repast;
+    @FXML private TableColumn<ReservedMeal, String> purchase_refectory;
 
     @FXML private ToggleGroup refectory;
     @FXML private RadioButton refectoryIe;
@@ -143,7 +145,7 @@ public class Adminpanel implements Initializable{
 
     @FXML
     public void cancelReservation(){
-        ObservableList<AdminReservation> selectedRes = reservationTb.getSelectionModel().getSelectedItems();
+        ObservableList<ReservedMeal> selectedRes = reservationTb.getSelectionModel().getSelectedItems();
 
         if(selectedRes.size()==0){
             AlertBox.showWarning("No reservations selected.");
@@ -152,45 +154,26 @@ public class Adminpanel implements Initializable{
 
         String confirmationMessage = selectedRes.size()+" reservations selected. " +
                 "These reservations will be cancelled.\n\nProceed?";
+
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
-            try{
-                // BUILD SQL QUERY
-                StringBuilder query = new StringBuilder("DELETE FROM reservations WHERE " +
-                        "(0");
+            List<org.bozdgn.model.ReservedMeal> meals = new ArrayList<>(selectedRes.size());
+            for(ReservedMeal r: selectedRes){
+                meals.add(new org.bozdgn.model.ReservedMeal(
+                        r.getPid(),
+                        r.getMid(),
+                        r.getDate(),
+                        r.getRepast(),
+                        r.getRefectory()));
+            }
 
-                for(AdminReservation r: selectedRes){
-                    // OBTAIN MEAL ID
-                    int meal_id;
-                    App.database.prepare("SELECT mid FROM meal WHERE date=? AND repast=?");
-                    Map<String, Object> results = App.database.fetch(new HashMap<Integer, Object>(){{
-                        put(1, r.getDate());
-                        put(2, r.getRepast());
-                    }});
-                    meal_id = (Integer) results.get("mid");
-
-                    // EXTEND QUERY
-                    query.append(" OR (pid='").append(r.getPid()).append("' AND mid=").append(meal_id).append(")");
-                }
-
-                query.append(")");
-
-                // DELETE RESERVATION ENTRIES
-                App.database.prepare(query.toString());
-                int _affected = App.database.executeUpdate(null);
-
-                if(_affected<1){
-                    // Probably an external interaction is made with the database
-                    System.out.println("Rezervasyonu silemedik :/");
-                }
-
-                updateReservationsTable();
-            } catch(SQLException e){ System.out.println("Bir şey oldu: "); e.printStackTrace(); }
+            ReservationService.batchCancelReservations(App.database, meals);
+            updateReservationsTable();
         }
     }
 
     @FXML
     public void setReservationsPurchased(){
-        ObservableList<AdminReservation> selectedRes = reservationTb.getSelectionModel().getSelectedItems();
+        ObservableList<ReservedMeal> selectedRes = reservationTb.getSelectionModel().getSelectedItems();
         int numberOfSelectedItems = selectedRes.size();
 
         if(numberOfSelectedItems==0){
@@ -202,7 +185,7 @@ public class Adminpanel implements Initializable{
                 "\n\nProceed?", numberOfSelectedItems);
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
             try{
-                for(AdminReservation res: selectedRes){
+                for(ReservedMeal res: selectedRes){
 
                     // DELETE RESERVATION ENTRY
                     App.database.prepare("DELETE FROM reservations " +
@@ -242,7 +225,7 @@ public class Adminpanel implements Initializable{
 
     @FXML
     public void removeReservations(){
-        ObservableList<AdminPurchase> selectedRes = purchaseTb.getSelectionModel().getSelectedItems();
+        ObservableList<ReservedMeal> selectedRes = purchaseTb.getSelectionModel().getSelectedItems();
         int numberOfSelectedItems = selectedRes.size();
 
         if(numberOfSelectedItems==0){
@@ -257,7 +240,7 @@ public class Adminpanel implements Initializable{
                 int failCount = 0;
 
                 App.database.prepare("DELETE FROM reservations WHERE pid=? AND mid=? AND refectory=?");
-                for(AdminPurchase purchase: selectedRes){
+                for(ReservedMeal purchase: selectedRes){
                     int _affected = App.database.executeUpdate(new HashMap<Integer, Object>(){{
                         put(1, purchase.getPid());
                         put(2, purchase.getMid());
@@ -280,7 +263,7 @@ public class Adminpanel implements Initializable{
 
     @FXML
     public void changeRefectory(){
-        ObservableList<AdminPurchase> selectedPurchases = purchaseTb.getSelectionModel().getSelectedItems();
+        ObservableList<ReservedMeal> selectedPurchases = purchaseTb.getSelectionModel().getSelectedItems();
         int numberOfSelectedItems = selectedPurchases.size();
 
         if(numberOfSelectedItems==0){
@@ -306,7 +289,7 @@ public class Adminpanel implements Initializable{
                 int failCount = 0;
 
                 App.database.prepare("UPDATE has_meal SET refectory=? WHERE pid=? AND mid=?");
-                for(AdminPurchase purchase: selectedPurchases){
+                for(ReservedMeal purchase: selectedPurchases){
                     int _affected = App.database.executeUpdate(new HashMap<Integer, Object>(){{
                         put(1, newRefectory);
                         put(2, purchase.getPid());
@@ -329,7 +312,7 @@ public class Adminpanel implements Initializable{
 
     @FXML
     public void removePurchases(){
-        ObservableList<AdminPurchase> selectedPurchases = purchaseTb.getSelectionModel().getSelectedItems();
+        ObservableList<ReservedMeal> selectedPurchases = purchaseTb.getSelectionModel().getSelectedItems();
         int numberOfSelectedItems = selectedPurchases.size();
 
         if(numberOfSelectedItems==0){
@@ -344,7 +327,7 @@ public class Adminpanel implements Initializable{
                 int failCount = 0;
 
                 App.database.prepare("DELETE FROM has_meal WHERE pid=? AND mid=? AND refectory=?");
-                for(AdminPurchase purchase: selectedPurchases){
+                for(ReservedMeal purchase: selectedPurchases){
                     int _affected = App.database.executeUpdate(new HashMap<Integer, Object>(){{
                         put(1, purchase.getPid());
                         put(2, purchase.getMid());
@@ -549,7 +532,7 @@ public class Adminpanel implements Initializable{
             if(result.isEmpty()){
                 mostPurchasedDateLb.setText("not present");
             } else{
-                mostPurchasedDateLb.setText((String) result.get("date"));
+                mostPurchasedDateLb.setText(result.get("date").toString());
             }
 
         } catch(SQLException e){ System.out.println("// MOST PURCHASED MEAL : DATE"); e.printStackTrace(); }
@@ -559,8 +542,8 @@ public class Adminpanel implements Initializable{
 
         try{
             // MOST SERVED FOOD : FOOD
-            App.database.prepare("SELECT COUNT(*) as count, food_name FROM food, has_food" +
-                    "WHERE food.fid=has_food.fid GROUP BY fid ORDER BY count DESC");
+            App.database.prepare("SELECT COUNT(*) as count, food_name FROM food, has_food "  +
+                    "WHERE food.fid=has_food.fid GROUP BY food.fid ORDER BY count DESC");
 
             Map result = App.database.fetch(null);
             if(result.isEmpty()){
@@ -583,7 +566,7 @@ public class Adminpanel implements Initializable{
 
         try{
             // STUDENTS PURCHASED ANY MEAL
-            App.database.prepare("SELECT COUNT(*) as count FROM has_meal" +
+            App.database.prepare("SELECT COUNT(*) as count FROM has_meal " +
                     "WHERE date>=? AND date<=? GROUP BY pid");
 
             Map result = App.database.fetch(new HashMap<Integer, Object>(){{
@@ -614,13 +597,13 @@ public class Adminpanel implements Initializable{
     // UPDATING METHODS
     private void updateReservationsTable(){
         try{
-            ArrayList<AdminReservation> resList = new ArrayList<>();
+            ArrayList<ReservedMeal> resList = new ArrayList<>();
             App.database.prepare("SELECT * FROM reservations, meal " +
                     "WHERE reservations.mid=meal.mid");
             List<Map<String, Object>> results = App.database.fetchAll(null);
 
             for(Map<String, Object> result: results){
-                resList.add(new AdminReservation(
+                resList.add(new ReservedMeal(
                         (String) result.get("pid"),
                         (Integer) result.get("mid"),
                         ((java.sql.Date) result.get("date")).toLocalDate(),
@@ -635,13 +618,13 @@ public class Adminpanel implements Initializable{
 
     private void updatePurchaseTable(){
         try{
-            ArrayList<AdminPurchase> purchaseList = new ArrayList<>();
+            ArrayList<ReservedMeal> purchaseList = new ArrayList<>();
             App.database.prepare("SELECT * FROM has_meal, meal " +
                     "WHERE has_meal.mid=meal.mid");
             List<Map<String, Object>> results = App.database.fetchAll(null);
 
             for(Map<String, Object> result: results){
-                purchaseList.add(new AdminPurchase(
+                purchaseList.add(new ReservedMeal(
                         (String) result.get("pid"),
                         (Integer) result.get("mid"),
                         ((java.sql.Date) result.get("date")).toLocalDate(),

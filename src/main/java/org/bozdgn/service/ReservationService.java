@@ -1,7 +1,6 @@
 package org.bozdgn.service;
 
-import org.bozdgn.client.App;
-import org.bozdgn.model.Reservation;
+import org.bozdgn.model.ReservedMeal;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -87,34 +86,7 @@ public class ReservationService {
         }
     }
 
-    public static void cancelReservations(
-            Database db,
-            String pid,
-            List<Reservation> meals
-    ) {
-
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
-
-        try(PreparedStatement st = conn.prepareStatement(
-                "DELETE FROM reservations WHERE pid=? AND ("
-                + String.join(" OR ", Collections.nCopies(meals.size(), "mid=?"))
-                + ")")) {
-
-            st.setString(1, pid);
-
-            for(int i = 0; i < meals.size(); ++i) {
-                Reservation it = meals.get(i);
-                int mid = MealService.getMealID(db, it.getDate(), it.getRepast());
-                st.setInt(i + 2, mid);
-            }
-
-            st.executeUpdate();
-        } catch(SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void makeSinglePurchase(
+    public static void makePurchase(
             Database db,
             String pid,
             int mid
@@ -182,7 +154,7 @@ public class ReservationService {
     }
 
     /** Returns a list of reservations made by given person that are not purchased yet. */
-    public static List<Reservation> listUnpaid(
+    public static List<ReservedMeal> listUnpaid(
             Database db,
             String pid
     ) {
@@ -196,9 +168,10 @@ public class ReservationService {
             st.setString(1, pid);
             ResultSet rs = st.executeQuery();
 
-            List<Reservation> result = new ArrayList<>();
+            List<ReservedMeal> result = new ArrayList<>();
             while(rs.next()) {
-                result.add(new Reservation(
+                result.add(new ReservedMeal(
+                        pid,
                         rs.getInt(1),
                         rs.getDate(2).toLocalDate(),
                         rs.getString(3),
@@ -215,23 +188,25 @@ public class ReservationService {
     }
 
     /** Returns a list of reservations bought by given person. */
-    public static List<Reservation> listPaid(
+    public static List<ReservedMeal> listPaid(
             Database db,
             String pid
     ) {
         Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
 
         try(PreparedStatement st = conn.prepareStatement(
-                "SELECT date, repast, refectory "
+                "SELECT reservations.mid, date, repast, refectory "
                     + "FROM has_meal JOIN meal ON has_meal.mid = meal.mid "
                     + "WHERE pid=?")) {
 
             st.setString(1, pid);
             ResultSet rs = st.executeQuery();
 
-            List<Reservation> result = new ArrayList<>();
+            List<ReservedMeal> result = new ArrayList<>();
             while(rs.next()) {
-                result.add(new Reservation(
+                result.add(new ReservedMeal(
+                        pid,
+                        rs.getInt(1),
                         rs.getDate(1).toLocalDate(),
                         rs.getString(2),
                         rs.getString(3)));
@@ -263,6 +238,60 @@ public class ReservationService {
 
             st.executeUpdate();
 
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void batchCancelReservations(
+            Database db,
+            String pid,
+            List<ReservedMeal> meals
+    ) {
+
+        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
+        try(PreparedStatement st = conn.prepareStatement(
+                "DELETE FROM reservations WHERE pid=? AND ("
+                + String.join(" OR ", Collections.nCopies(meals.size(), "mid=?"))
+                + ")")) {
+
+            st.setString(1, pid);
+
+            for(int i = 0; i < meals.size(); ++i) {
+                ReservedMeal it = meals.get(i);
+                int mid = MealService.getMealID(db, it.getDate(), it.getRepast());
+                st.setInt(i + 2, mid);
+            }
+
+            st.executeUpdate();
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void batchCancelReservations(
+            Database db,
+            List<ReservedMeal> meals
+    ) {
+
+        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
+        try(PreparedStatement st = conn.prepareStatement(
+                "DELETE FROM reservations WHERE "
+                + String.join(" OR ",
+                        Collections.nCopies(meals.size(), "(pid=? AND mid=?)"))
+        )) {
+
+            for(int i = 0; i < meals.size(); ++i) {
+                ReservedMeal it = meals.get(i);
+                assert it.isCompleteView(): "Partial info given. Maybe wrong method call?";
+
+                st.setString(i*2, it.getPid());
+                st.setInt(i*2 + 1, it.getMid());
+            }
+
+            st.executeUpdate();
         } catch(SQLException e) {
             e.printStackTrace();
         }

@@ -6,13 +6,11 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 
 import javafx.scene.control.cell.PropertyValueFactory;
-import org.bozdgn.model.Reservation;
+import org.bozdgn.model.ReservedMeal;
 import org.bozdgn.service.MealService;
 import org.bozdgn.service.ReservationService;
 
 import java.net.URL;
-import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -31,18 +29,18 @@ public class Userpanel implements Initializable{
 
     @FXML private Button applyBt;
 
-    @FXML private TableView<Reservation> reservationTb;
-    @FXML private TableColumn<Reservation, LocalDate> res_date;
-    @FXML private TableColumn<Reservation, String> res_repast;
-    @FXML private TableColumn<Reservation, String> res_refectory;
+    @FXML private TableView<ReservedMeal> reservationTb;
+    @FXML private TableColumn<ReservedMeal, LocalDate> res_date;
+    @FXML private TableColumn<ReservedMeal, String> res_repast;
+    @FXML private TableColumn<ReservedMeal, String> res_refectory;
 
     @FXML private Button cancelSelectedBt;
     @FXML private Button purchaseBt;
 
-    @FXML private TableView<Reservation> purchaseTb;
-    @FXML private TableColumn<Reservation, LocalDate> purchase_date;
-    @FXML private TableColumn<Reservation, String> purchase_repast;
-    @FXML private TableColumn<Reservation, String> purchase_refectory;
+    @FXML private TableView<ReservedMeal> purchaseTb;
+    @FXML private TableColumn<ReservedMeal, LocalDate> purchase_date;
+    @FXML private TableColumn<ReservedMeal, String> purchase_repast;
+    @FXML private TableColumn<ReservedMeal, String> purchase_refectory;
 
     @FXML private Button changeRefectoryBt;
 
@@ -114,7 +112,7 @@ public class Userpanel implements Initializable{
 
     @FXML
     public void cancelReservation(){
-        ObservableList<Reservation> selectedRes = reservationTb.getSelectionModel().getSelectedItems();
+        ObservableList<ReservedMeal> selectedRes = reservationTb.getSelectionModel().getSelectedItems();
 
         if(selectedRes.size()==0){
             AlertBox.showWarning("No reservations selected.");
@@ -124,12 +122,12 @@ public class Userpanel implements Initializable{
         String confirmationMessage = selectedRes.size()+" reservations selected. " +
                 "These reservations will be cancelled.\n\nProceed?";
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
-            List<Reservation> meals = new ArrayList<>(selectedRes.size());
-            for(Reservation r: selectedRes){
-                meals.add(new Reservation(r.getDate(), r.getRepast(), null));
+            List<ReservedMeal> meals = new ArrayList<>(selectedRes.size());
+            for(ReservedMeal r: selectedRes){
+                meals.add(new ReservedMeal(r.getDate(), r.getRepast(), null));
             }
 
-            ReservationService.cancelReservations(App.database, App.personId, meals);
+            ReservationService.batchCancelReservations(App.database, App.personId, meals);
             updateReservationsTable();
         }
     }
@@ -143,8 +141,8 @@ public class Userpanel implements Initializable{
 
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
 
-            for(Reservation it: ReservationService.listUnpaid(App.database, App.personId)) {
-                ReservationService.makeSinglePurchase(App.database, App.personId, it.getMid());
+            for(ReservedMeal it: ReservationService.listUnpaid(App.database, App.personId)) {
+                ReservationService.makePurchase(App.database, App.personId, it.getMid());
             }
 
             updateReservationsTable();
@@ -154,7 +152,7 @@ public class Userpanel implements Initializable{
 
     @FXML
     public void changeRefectory(){
-        Reservation selected = purchaseTb.getSelectionModel().getSelectedItem();
+        ReservedMeal selected = purchaseTb.getSelectionModel().getSelectedItem();
 
         if(selected == null){
             AlertBox.showWarning("No purchases selected.");
@@ -176,13 +174,13 @@ public class Userpanel implements Initializable{
 
     private void updateReservationsTable(){
         // load the items
-        List<Reservation> resList = ReservationService.listUnpaid(App.database, App.personId);
+        List<ReservedMeal> resList = ReservationService.listUnpaid(App.database, App.personId);
         reservationTb.getItems().setAll(resList);
     }
 
     private void updatePurchaseTable(){
         // load the items
-        List<Reservation> purchaseList = ReservationService.listPaid(App.database, App.personId);
+        List<ReservedMeal> purchaseList = ReservationService.listPaid(App.database, App.personId);
         purchaseTb.getItems().setAll(purchaseList);
     }
 }
