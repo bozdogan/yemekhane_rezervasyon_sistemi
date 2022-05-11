@@ -1,24 +1,32 @@
 package org.bozdgn.model;
 
-import java.time.LocalDate;
+public class Reservation {
+    String pid;
+    int mid;
+    String refectory;
 
-public class Reservation{
-    private LocalDate date;
-    private String repast;
-    private String refectory;
-
-    public Reservation(LocalDate date, String repast, String refectory){
-        this.date = date;
-        this.repast = repast;
+    public Reservation(String pid, int mid, String refectory) {
+        this.pid = pid;
+        this.mid = mid;
         this.refectory = refectory;
     }
 
-    public LocalDate getDate(){ return date; }
-    public void setDate(LocalDate date){ this.date = date; }
 
-    public String getRepast(){ return repast; }
-    public void setRepast(String repast){ this.repast = repast; }
+    public String getPid() {
+        return pid;
+    }
 
-    public String getRefectory(){ return refectory; }
-    public void setRefectory(String refectory){ this.refectory = refectory; }
+    public int getMid() {
+        return mid >= 0
+                ? mid
+                : -1;
+    }
+
+    public String getRefectory() {
+        return refectory;
+    }
+
+    public void setRefectory(String refectory) {
+        this.refectory = refectory;
+    }
 }

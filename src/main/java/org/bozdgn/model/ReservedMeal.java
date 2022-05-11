@@ -1,0 +1,76 @@
+package org.bozdgn.model;
+
+import java.time.LocalDate;
+
+/** A view model for table view widgets of client UI. */
+public class ReservedMeal {
+    String pid;
+    int mid;
+    LocalDate date;
+    String repast;
+    String refectory;
+
+    boolean _is_complete;
+
+
+    public ReservedMeal(LocalDate date, String repast, String refectory) {
+        this.pid = null;
+        this.mid = -1;
+        _is_complete = false;
+
+        this.date = date;
+        this.repast = repast;
+        this.refectory = refectory;
+    }
+
+    public ReservedMeal(String pid, int mid, LocalDate date, String repast, String refectory) {
+        this.pid = pid;
+        this.mid = mid;
+        this._is_complete = pid != null && mid >= 0;
+
+        this.date = date;
+        this.repast = repast;
+        this.refectory = refectory;
+    }
+
+
+    public String getPid() {
+        return pid;
+    }
+
+    public int getMid() {
+        return mid >= 0
+                ? mid
+                : -1;
+    }
+
+    /** If this model is used on user panel, then it doesn't have to have
+     * `pid` and `mid` fields. This flag specifies if those fields are valid. */
+    public boolean isComplete() {
+        return _is_complete;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
+    public String getRepast() {
+        return repast;
+    }
+
+    public void setRepast(String repast) {
+        this.repast = repast;
+    }
+
+    public String getRefectory() {
+        return refectory;
+    }
+
+    public void setRefectory(String refectory) {
+        this.refectory = refectory;
+    }
+}

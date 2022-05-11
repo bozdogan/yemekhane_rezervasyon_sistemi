@@ -1,4 +1,4 @@
-package org.bozdgn;
+package org.bozdgn.client;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -6,13 +6,16 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.bozdgn.service.DatabaseService;
+
+import java.sql.Connection;
 
 public class App extends Application{
     static String appName = "EsYemek Otomasyonu";
     static double unitPrice = 1.25;
 
     static Stage stage;
-    static Database database;
+    static Connection dbconn;
     static String currentUser;
     static String personId; // for database relations
 
@@ -20,12 +23,12 @@ public class App extends Application{
     public void start(Stage primaryStage) throws Exception{
         stage = primaryStage;
 
-        database = new Database("localhost",
+        dbconn = DatabaseService.connect("localhost",
                 "refectory",
                 "",
                 "refectory");
 
-        if(!database.testConnection()){
+        if(dbconn == null){
             AlertBox.showWarningAndWait("Database connection failure!");
             Platform.exit();
             return;

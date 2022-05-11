@@ -80,22 +80,6 @@ ENGINE=InnoDB
 ;
 
 
-CREATE TABLE `purchase` (
-    `pid` INT(10) NOT NULL,
-    `mid` INT(10) NOT NULL,
-    `date` DATE NOT NULL,
-    `repast` ENUM('B','L','D') NOT NULL,
-    `refectory` ENUM('ieylul','yemre') NOT NULL,
-    PRIMARY KEY (`pid`, `mid`, `date`),
-    INDEX `FK_purchase_meal` (`mid`),
-    CONSTRAINT `FK_purchase_meal` FOREIGN KEY (`mid`) REFERENCES `meal` (`mid`) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT `FK_purchase_users` FOREIGN KEY (`pid`) REFERENCES `users` (`pid`) ON UPDATE CASCADE ON DELETE RESTRICT
-)
-COLLATE='utf8_turkish_ci'
-ENGINE=InnoDB
-;
-
-
 CREATE TABLE `has_food` (
     `fid` INT(10) NOT NULL,
     `mid` INT(10) NOT NULL,
