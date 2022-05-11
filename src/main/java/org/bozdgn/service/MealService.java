@@ -1,7 +1,7 @@
 package org.bozdgn.service;
 
-import org.bozdgn.client.data.Food;
-import org.bozdgn.client.data.Meal;
+import org.bozdgn.model.Food;
+import org.bozdgn.model.Meal;
 
 import java.sql.*;
 import java.time.LocalDate;

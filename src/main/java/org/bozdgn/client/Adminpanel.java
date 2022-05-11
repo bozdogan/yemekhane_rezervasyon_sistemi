@@ -12,12 +12,14 @@ import java.time.LocalDate;
 import java.util.*;
 
 import javafx.scene.control.cell.PropertyValueFactory;
-import org.bozdgn.client.data.*;
+import org.bozdgn.model.Food;
+import org.bozdgn.model.Meal;
 import org.bozdgn.model.Reservation;
 import org.bozdgn.model.ReservedMeal;
 import org.bozdgn.service.FoodService;
 import org.bozdgn.service.MealService;
 import org.bozdgn.service.ReservationService;
+import org.bozdgn.service.StatisticsService;
 
 public class Adminpanel implements Initializable{
 
@@ -350,38 +352,17 @@ public class Adminpanel implements Initializable{
 
     @FXML
     public void loadGeneralStatictics(){
-        try{
-            // MOST PURCHASED MEAL : DATE
-            App.database.prepare("SELECT COUNT(*) as count, date FROM meal, has_meal " +
-                    "WHERE meal.mid = has_meal.mid " +
-                    "GROUP BY date " +
-                    "ORDER BY count DESC");
 
-            Map result = App.database.fetch(null);
-            if(result.isEmpty()){
-                mostPurchasedDateLb.setText("not present");
-            } else{
-                mostPurchasedDateLb.setText(result.get("date").toString());
-            }
+        // MOST PURCHASED MEAL : DATE
+        LocalDate mostPurchasedDate = StatisticsService.getMostPurchasedDate(App.database);
+        mostPurchasedDateLb.setText(mostPurchasedDate.toString());
 
-        } catch(SQLException e){ System.out.println("// MOST PURCHASED MEAL : DATE"); e.printStackTrace(); }
-
-            // MOST PURCHASES ON AVERAGE : WEEKDAY
+        // MOST PURCHASES ON AVERAGE : WEEKDAY
 
 
-        try{
-            // MOST SERVED FOOD : FOOD
-            App.database.prepare("SELECT COUNT(*) as count, food_name FROM food, has_food "  +
-                    "WHERE food.fid=has_food.fid GROUP BY food.fid ORDER BY count DESC");
-
-            Map result = App.database.fetch(null);
-            if(result.isEmpty()){
-                mostServedMealLb.setText("not present");
-            } else{
-                mostServedMealLb.setText((String) result.get("date"));
-            }
-
-        } catch(SQLException e){ System.out.println("// MOST SERVED FOOD : FOOD"); e.printStackTrace(); }
+        // MOST SERVED FOOD : FOOD
+        mostServedMealLb.setText(
+                StatisticsService.getMostServedFood(App.database));
     }
 
     @FXML
@@ -393,23 +374,14 @@ public class Adminpanel implements Initializable{
         if(startDate==null || endDate==null)
             return; // both need to be picked to proceed.
 
-        try{
-            // STUDENTS PURCHASED ANY MEAL
-            App.database.prepare("SELECT COUNT(*) as count FROM has_meal " +
-                    "WHERE date>=? AND date<=? GROUP BY pid");
+        int count = StatisticsService.countPurchasedMeals(
+                App.database,
+                startDate,
+                endDate);
 
-            Map result = App.database.fetch(new HashMap<Integer, Object>(){{
-                put(1, startDate);
-                put(2, endDate);
-            }});
+        mostServedMealLb.setText(String.valueOf(count));
 
-            if(result.isEmpty()){
-                mostServedMealLb.setText("N/A");
-            } else{
-                mostServedMealLb.setText((String) result.get("count"));
-            }
 
-        } catch(SQLException e){ e.printStackTrace(); }
         // STUDENTS CHANGED REFECTORY
 
         // STUDENT MISSED A MEAL THEY PURCHASED
@@ -425,45 +397,13 @@ public class Adminpanel implements Initializable{
 
     // UPDATING METHODS
     private void updateReservationsTable(){
-        try{
-            ArrayList<ReservedMeal> resList = new ArrayList<>();
-            App.database.prepare("SELECT * FROM reservations, meal " +
-                    "WHERE reservations.mid=meal.mid");
-            List<Map<String, Object>> results = App.database.fetchAll(null);
-
-            for(Map<String, Object> result: results){
-                resList.add(new ReservedMeal(
-                        (String) result.get("pid"),
-                        (Integer) result.get("mid"),
-                        ((java.sql.Date) result.get("date")).toLocalDate(),
-                        (String) result.get("repast"),
-                        (String) result.get("refectory")
-                ));
-            }
-
-            reservationTb.getItems().setAll(resList);
-        } catch(SQLException e){ e.printStackTrace(); }
+        List<ReservedMeal> resList = ReservationService.listPaidAll(App.database);
+        reservationTb.getItems().setAll(resList);
     }
 
     private void updatePurchaseTable(){
-        try{
-            ArrayList<ReservedMeal> purchaseList = new ArrayList<>();
-            App.database.prepare("SELECT * FROM has_meal, meal " +
-                    "WHERE has_meal.mid=meal.mid");
-            List<Map<String, Object>> results = App.database.fetchAll(null);
-
-            for(Map<String, Object> result: results){
-                purchaseList.add(new ReservedMeal(
-                        (String) result.get("pid"),
-                        (Integer) result.get("mid"),
-                        ((java.sql.Date) result.get("date")).toLocalDate(),
-                        (String) result.get("repast"),
-                        (String) result.get("refectory")
-                ));
-            }
-
-            purchaseTb.getItems().setAll(purchaseList);
-        } catch(SQLException e){ e.printStackTrace(); }
+        List<ReservedMeal> purchaseList = ReservationService.listPaidAll(App.database);
+        purchaseTb.getItems().setAll(purchaseList);
     }
 
     private void updateMealsTable(){

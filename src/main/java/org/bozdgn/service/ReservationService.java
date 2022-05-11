@@ -188,7 +188,38 @@ public class ReservationService {
         return null;  // TODO(bora): Handle errors properly so we can guarantee non-null return.
     }
 
-    /** Returns a list of reservations bought by given person. */
+    /** Returns a list of reservations made that are not purchased yet. */
+    public static List<ReservedMeal> listUnpaidAll(
+            Database db
+    ) {
+        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
+        try(PreparedStatement st = conn.prepareStatement(
+                "SELECT reservations.mid, date, repast, refectory "
+                    + "FROM reservations JOIN meal ON reservations.mid = meal.mid")) {
+
+            ResultSet rs = st.executeQuery();
+
+            List<ReservedMeal> result = new ArrayList<>();
+            while(rs.next()) {
+                result.add(new ReservedMeal(
+                        rs.getString(1),
+                        rs.getInt(2),
+                        rs.getDate(3).toLocalDate(),
+                        rs.getString(4),
+                        rs.getString(5)));
+            }
+
+            return result;
+
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;  // TODO(bora): Handle errors properly so we can guarantee non-null return.
+    }
+
+    /** Returns a list of reservations purchased by given person. */
     public static List<ReservedMeal> listPaid(
             Database db,
             String pid
@@ -211,6 +242,37 @@ public class ReservationService {
                         rs.getDate(2).toLocalDate(),
                         rs.getString(3),
                         rs.getString(4)));
+            }
+
+            return result;
+
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;  // TODO(bora): Handle errors properly so we can guarantee non-null return.
+    }
+
+    /** Returns a list of reservations purchased. */
+    public static List<ReservedMeal> listPaidAll(
+            Database db
+    ) {
+        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
+        try(PreparedStatement st = conn.prepareStatement(
+                "SELECT has_meal.mid, date, repast, refectory "
+                    + "FROM has_meal JOIN meal ON has_meal.mid = meal.mid")) {
+
+            ResultSet rs = st.executeQuery();
+
+            List<ReservedMeal> result = new ArrayList<>();
+            while(rs.next()) {
+                result.add(new ReservedMeal(
+                        rs.getString(1),
+                        rs.getInt(2),
+                        rs.getDate(3).toLocalDate(),
+                        rs.getString(4),
+                        rs.getString(5)));
             }
 
             return result;

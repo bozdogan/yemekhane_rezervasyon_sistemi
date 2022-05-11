@@ -1,6 +1,6 @@
 package org.bozdgn.service;
 
-import org.bozdgn.client.data.Food;
+import org.bozdgn.model.Food;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
