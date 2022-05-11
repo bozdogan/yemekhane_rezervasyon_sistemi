@@ -397,7 +397,7 @@ public class Adminpanel implements Initializable{
 
     // UPDATING METHODS
     private void updateReservationsTable(){
-        List<ReservedMeal> resList = ReservationService.listPaidAll(App.database);
+        List<ReservedMeal> resList = ReservationService.listUnpaidAll(App.database);
         reservationTb.getItems().setAll(resList);
     }
 
