@@ -363,8 +363,8 @@ public class ReservationService {
 
             for(int i = 0; i < meals.size(); ++i) {
                 Reservation it = meals.get(i);
-                st.setString(i*2, it.getPid());
-                st.setInt(i*2 + 1, it.getMid());
+                st.setString(i*2 + 1, it.getPid());
+                st.setInt(i*2 + 2, it.getMid());
             }
 
             st.executeUpdate();
@@ -389,8 +389,8 @@ public class ReservationService {
 
             for(int i = 0; i < meals.size(); ++i) {
                 Reservation it = meals.get(i);
-                st.setString(i*2, it.getPid());
-                st.setInt(i*2 + 1, it.getMid());
+                st.setString(i*2 + 1, it.getPid());
+                st.setInt(i*2 + 2, it.getMid());
             }
 
             st.executeUpdate();
