@@ -23,7 +23,7 @@ public class Login{
             User user = UserService.login(App.dbconn, usernameTx.getText(), passwordTx.getText());
             if(user != null) {
                 if(user.isAdmin()) {
-                    App.currentUser = "amdin";
+                    App.currentUser = "admin";
                     App.stage.setTitle(App.appName+" Admin Panel | User: "+App.currentUser);
                     App.stage.setScene(new Scene(
                             FXMLLoader.load(getClass().getResource("/adminpanel.fxml"))
