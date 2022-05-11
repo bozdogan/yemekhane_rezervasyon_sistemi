@@ -20,7 +20,7 @@ public class Login{
     @FXML
     void login(ActionEvent event) {
         try {
-            User user = UserService.login(App.database, usernameTx.getText(), passwordTx.getText());
+            User user = UserService.login(App.dbconn, usernameTx.getText(), passwordTx.getText());
             if(user != null) {
                 if(user.isAdmin()) {
                     App.currentUser = "amdin";

@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MealService {
-    public static List<Meal> listMeals(Database db) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+    public static List<Meal> listMeals(Connection conn) {
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "SELECT mid, date, repast FROM meal")) {
@@ -35,11 +35,11 @@ public class MealService {
 
     /** Returns -1 if entry not found. */
     public static int getMealID(
-            Database db,
+            Connection conn,
             LocalDate date,
             String repast
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "SELECT mid FROM meal WHERE date=? AND repast=?")) {
@@ -62,11 +62,11 @@ public class MealService {
     }
 
     public static void addMeal(
-            Database db,
+            Connection conn,
             LocalDate date,
             String repast
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "INSERT INTO meal (date, repast) VALUES (?,?)")) {
@@ -82,11 +82,11 @@ public class MealService {
     }
 
     public static void addMealFood(
-            Database db,
+            Connection conn,
             int mid,
             int fid
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "INSERT INTO has_food (mid, fid) VALUES (?,?)")) {
@@ -102,10 +102,10 @@ public class MealService {
     }
 
     public static List<Food> getFoods(
-            Database db,
+            Connection conn,
             int mid
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "SELECT food.fid, food_name " +
@@ -131,10 +131,10 @@ public class MealService {
     }
 
     public static void removeMealByID(
-            Database db,
+            Connection conn,
             int mid
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "DELETE FROM meal WHERE mid=?")) {

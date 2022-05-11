@@ -7,7 +7,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 
 import java.net.URL;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -169,7 +168,7 @@ public class Adminpanel implements Initializable{
                         null));
             }
 
-            ReservationService.batchCancelReservationsByIDs(App.database, meals);
+            ReservationService.batchCancelReservationsByIDs(App.dbconn, meals);
             updateReservationsTable();
         }
     }
@@ -188,7 +187,7 @@ public class Adminpanel implements Initializable{
                 "\n\nProceed?", numberOfSelectedItems);
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
             for(ReservedMeal it: selectedRes) {
-                ReservationService.makePurchase(App.database, it.getPid(), it.getMid());
+                ReservationService.makePurchase(App.dbconn, it.getPid(), it.getMid());
             }
 
             updateReservationsTable();
@@ -229,7 +228,7 @@ public class Adminpanel implements Initializable{
                         null));
             }
 
-            ReservationService.batchChangeReservationRefectory(App.database, meals, newRefectory);
+            ReservationService.batchChangeReservationRefectory(App.dbconn, meals, newRefectory);
             updateReservationsTable();
         }
     }
@@ -256,7 +255,7 @@ public class Adminpanel implements Initializable{
                         null));
             }
 
-            ReservationService.batchRemovePurchaseByIDs(App.database, meals);
+            ReservationService.batchRemovePurchaseByIDs(App.dbconn, meals);
             updatePurchaseTable();
         }
     }
@@ -272,7 +271,7 @@ public class Adminpanel implements Initializable{
                 "     %s %s\n\nProceed?", selectedMeal.getDate(), selectedMeal.getRepast());
 
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
-            MealService.removeMealByID(App.database, selectedMeal.getMid());
+            MealService.removeMealByID(App.dbconn, selectedMeal.getMid());
         }
     }
 
@@ -304,13 +303,13 @@ public class Adminpanel implements Initializable{
         int food4ID = add_foodCb4.getSelectionModel().getSelectedItem().getFid();
 
 
-        MealService.addMeal(App.database, mealDate, repastStr);
-        int mealID = MealService.getMealID(App.database, mealDate, repastStr);
+        MealService.addMeal(App.dbconn, mealDate, repastStr);
+        int mealID = MealService.getMealID(App.dbconn, mealDate, repastStr);
 
-        MealService.addMealFood(App.database, mealID, food1ID);
-        MealService.addMealFood(App.database, mealID, food2ID);
-        MealService.addMealFood(App.database, mealID, food3ID);
-        MealService.addMealFood(App.database, mealID, food4ID);
+        MealService.addMealFood(App.dbconn, mealID, food1ID);
+        MealService.addMealFood(App.dbconn, mealID, food2ID);
+        MealService.addMealFood(App.dbconn, mealID, food3ID);
+        MealService.addMealFood(App.dbconn, mealID, food4ID);
 
         updateMealsTable();
     }
@@ -329,7 +328,7 @@ public class Adminpanel implements Initializable{
                 "\n\nProceed?", numberOfSelectedItems);
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
             for(Food it: selectedFoods) {
-                FoodService.removeFood(App.database, it.getFid());
+                FoodService.removeFood(App.dbconn, it.getFid());
             }
 
             updateFoodsTable();
@@ -342,7 +341,7 @@ public class Adminpanel implements Initializable{
         if(foodName.equals(""))
             return;
 
-        FoodService.addFood(App.database, foodName);
+        FoodService.addFood(App.dbconn, foodName);
     }
 
 
@@ -354,7 +353,7 @@ public class Adminpanel implements Initializable{
     public void loadGeneralStatictics(){
 
         // MOST PURCHASED MEAL : DATE
-        LocalDate mostPurchasedDate = StatisticsService.getMostPurchasedDate(App.database);
+        LocalDate mostPurchasedDate = StatisticsService.getMostPurchasedDate(App.dbconn);
         mostPurchasedDateLb.setText(mostPurchasedDate.toString());
 
         // MOST PURCHASES ON AVERAGE : WEEKDAY
@@ -362,7 +361,7 @@ public class Adminpanel implements Initializable{
 
         // MOST SERVED FOOD : FOOD
         mostServedMealLb.setText(
-                StatisticsService.getMostServedFood(App.database));
+                StatisticsService.getMostServedFood(App.dbconn));
     }
 
     @FXML
@@ -375,7 +374,7 @@ public class Adminpanel implements Initializable{
             return; // both need to be picked to proceed.
 
         int count = StatisticsService.countPurchasedMeals(
-                App.database,
+                App.dbconn,
                 startDate,
                 endDate);
 
@@ -397,23 +396,23 @@ public class Adminpanel implements Initializable{
 
     // UPDATING METHODS
     private void updateReservationsTable(){
-        List<ReservedMeal> resList = ReservationService.listUnpaidAll(App.database);
+        List<ReservedMeal> resList = ReservationService.listUnpaidAll(App.dbconn);
         reservationTb.getItems().setAll(resList);
     }
 
     private void updatePurchaseTable(){
-        List<ReservedMeal> purchaseList = ReservationService.listPaidAll(App.database);
+        List<ReservedMeal> purchaseList = ReservationService.listPaidAll(App.dbconn);
         purchaseTb.getItems().setAll(purchaseList);
     }
 
     private void updateMealsTable(){
-        List<Meal> mealList = MealService.listMeals(App.database);
+        List<Meal> mealList = MealService.listMeals(App.dbconn);
         mealsTb.getItems().setAll(mealList);
     }
 
     @FXML
     private void updateFoodsTable(){
-        List<Food> foodList = FoodService.listFoods(App.database);
+        List<Food> foodList = FoodService.listFoods(App.dbconn);
         foodsTb.getItems().setAll(foodList);
         updateFoodFields();
     }
@@ -440,7 +439,7 @@ public class Adminpanel implements Initializable{
 
         updateFoodFields();
 
-        List<Food> foods = MealService.getFoods(App.database, selectedMeal.getMid());
+        List<Food> foods = MealService.getFoods(App.dbconn, selectedMeal.getMid());
         meal_foodCb1.getSelectionModel().select(foods.get(0));
         meal_foodCb2.getSelectionModel().select(foods.get(2));
         meal_foodCb3.getSelectionModel().select(foods.get(3));

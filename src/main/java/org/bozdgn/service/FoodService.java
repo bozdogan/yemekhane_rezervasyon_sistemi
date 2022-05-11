@@ -10,8 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FoodService {
-    public static List<Food> listFoods(Database db) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+    public static List<Food> listFoods(Connection conn) {
 
         try(PreparedStatement st = conn.prepareStatement(
                 "SELECT fid, food_name FROM food")) {
@@ -33,8 +32,7 @@ public class FoodService {
         return null;  // TODO(bora): Handle errors properly so we can guarantee non-null return.
     }
 
-    public static int getFoodID(Database db, String foodName) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+    public static int getFoodID(Connection conn, String foodName) {
 
         try(PreparedStatement st = conn.prepareStatement(
                 "SELECT fid FROM food WHERE food_name=?")) {
@@ -52,8 +50,7 @@ public class FoodService {
         return -1;
     }
 
-    public static void addFood(Database db, String foodName) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+    public static void addFood(Connection conn, String foodName) {
 
         try(PreparedStatement st = conn.prepareStatement(
                 "INSERT INTO food (food_name) VALUES (?)")) {
@@ -66,8 +63,7 @@ public class FoodService {
         }
     }
 
-    public static void removeFood(Database db, int fid) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+    public static void removeFood(Connection conn, int fid) {
 
         try(PreparedStatement st = conn.prepareStatement(
                 "DELETE FROM food WHERE fid=?")) {

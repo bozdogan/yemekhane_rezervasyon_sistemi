@@ -6,12 +6,12 @@ import java.sql.*;
 
 public class UserService {
     /** Returns `null` if login fails. */
-    public static User login(Database db, String pid, String password) {
+    public static User login(Connection conn, String pid, String password) {
         if(pid.equals("admin") && password.equals("admin")) {
             return new User("admin", "Admin", "Admin", true);
         }
 
-        try(PreparedStatement st = db.connection.prepareStatement(
+        try(PreparedStatement st = conn.prepareStatement(
                 "SELECT pid, firstname, lastname FROM users WHERE pid=? AND password=?")
         ) {
             st.setString(1, pid);

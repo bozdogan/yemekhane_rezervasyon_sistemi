@@ -5,8 +5,7 @@ import java.time.LocalDate;
 
 public class StatisticsService {
 
-    public static LocalDate getMostPurchasedDate(Database db) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+    public static LocalDate getMostPurchasedDate(Connection conn) {
 
         // TODO(bora): This should've been just a flag in the table.
         try(PreparedStatement st = conn.prepareStatement(
@@ -27,8 +26,7 @@ public class StatisticsService {
         return null;
     }
 
-    public static String getMostServedFood(Database db) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+    public static String getMostServedFood(Connection conn) {
 
         // TODO(bora): This should've been just a flag in the table.
         try(PreparedStatement st = conn.prepareStatement(
@@ -47,11 +45,10 @@ public class StatisticsService {
         return null;
     }
     public static int countPurchasedMeals(
-            Database db,
+            Connection conn,
             LocalDate startDate,
             LocalDate endDate
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
 
         // TODO(bora): This should've been just a flag in the table.
         try(PreparedStatement st = conn.prepareStatement(

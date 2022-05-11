@@ -1,7 +1,5 @@
 package org.bozdgn.model;
 
-import java.time.LocalDate;
-
 public class Reservation {
     String pid;
     int mid;

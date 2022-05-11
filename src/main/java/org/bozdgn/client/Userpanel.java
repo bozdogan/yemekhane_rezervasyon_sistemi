@@ -85,14 +85,14 @@ public class Userpanel implements Initializable{
         }
 
         // OBTAIN MEAL ID
-        int meal_id = MealService.getMealID(App.database, resDate, repastStr);
+        int meal_id = MealService.getMealID(App.dbconn, resDate, repastStr);
         if(meal_id == -1) { // if meal d.n.e, meal id cannot be obtained.
             AlertBox.showWarning("No meal available with specified date and repast.");
             return;
         }
 
         // CHECK IF ALREADY RESERVED OR PURCHASED
-        boolean already_on_the_list = ReservationService.isReserved(App.database, App.personId, resDate, repastStr);
+        boolean already_on_the_list = ReservationService.isReserved(App.dbconn, App.personId, resDate, repastStr);
 
         if(already_on_the_list) {
             AlertBox.showWarning("Meal already reserved or purchased:\n" +
@@ -101,7 +101,7 @@ public class Userpanel implements Initializable{
         }
 
         // ADD RESERVATION ENTRY
-        int affected = ReservationService.makeReservation(App.database,
+        int affected = ReservationService.makeReservation(App.dbconn,
                 App.personId,
                 meal_id,
                 refectoryStr);
@@ -127,7 +127,7 @@ public class Userpanel implements Initializable{
                 meals.add(new ReservedMeal(r.getDate(), r.getRepast(), null));
             }
 
-            ReservationService.batchCancelReservationsByIDs(App.database, App.personId, meals);
+            ReservationService.batchCancelReservationsByIDs(App.dbconn, App.personId, meals);
             updateReservationsTable();
         }
     }
@@ -135,14 +135,14 @@ public class Userpanel implements Initializable{
     @FXML
     public void purchaseReservations(){
         // GET PRICE
-        long resCount = ReservationService.countUnpaid(App.database, App.personId);
+        long resCount = ReservationService.countUnpaid(App.dbconn, App.personId);
         String confirmationMessage = String.format("%d reservations has total price of\n"+
                 "    ₺%.2f\n\nProceed?", resCount, resCount*App.unitPrice);
 
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
 
-            for(ReservedMeal it: ReservationService.listUnpaid(App.database, App.personId)) {
-                ReservationService.makePurchase(App.database, App.personId, it.getMid());
+            for(ReservedMeal it: ReservationService.listUnpaid(App.dbconn, App.personId)) {
+                ReservationService.makePurchase(App.dbconn, App.personId, it.getMid());
             }
 
             updateReservationsTable();
@@ -165,8 +165,8 @@ public class Userpanel implements Initializable{
 
         if(AlertBox.showConfirmation("Confirmation", confirmationMessage)){
 
-            int mid = MealService.getMealID(App.database, selected.getDate(), selected.getRepast());
-            ReservationService.changeReservationRefectory(App.database, App.personId, mid, newRefectory);
+            int mid = MealService.getMealID(App.dbconn, selected.getDate(), selected.getRepast());
+            ReservationService.changeReservationRefectory(App.dbconn, App.personId, mid, newRefectory);
 
                 updatePurchaseTable();
         }
@@ -174,13 +174,13 @@ public class Userpanel implements Initializable{
 
     private void updateReservationsTable(){
         // load the items
-        List<ReservedMeal> resList = ReservationService.listUnpaid(App.database, App.personId);
+        List<ReservedMeal> resList = ReservationService.listUnpaid(App.dbconn, App.personId);
         reservationTb.getItems().setAll(resList);
     }
 
     private void updatePurchaseTable(){
         // load the items
-        List<ReservedMeal> purchaseList = ReservationService.listPaid(App.database, App.personId);
+        List<ReservedMeal> purchaseList = ReservationService.listPaid(App.dbconn, App.personId);
         purchaseTb.getItems().setAll(purchaseList);
     }
 }

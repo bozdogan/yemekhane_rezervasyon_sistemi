@@ -12,12 +12,12 @@ import java.util.List;
 public class ReservationService {
     /** Returns `true` if there is an entry in "meals" table with provided info. */
     public static boolean isReserved(
-            Database db,
+            Connection conn,
             String pid,
             LocalDate date,
             String repast
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "SELECT COUNT(*) as count FROM reservations, meal " +
@@ -43,12 +43,12 @@ public class ReservationService {
 
     /** Returns number of rows affected by operation. Should be either 0 or 1. */
     public static int makeReservation(
-            Database db,
+            Connection conn,
             String pid,
             int mid,
             String refectory
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "INSERT INTO reservations (pid, mid, refectory) " +
@@ -67,17 +67,17 @@ public class ReservationService {
     }
 
     public static void cancelReservation(
-            Database db,
+            Connection conn,
             String pid,
             LocalDate date,
             String repast
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "DELETE FROM reservations WHERE pid=? AND mid=?")) {
 
-            int mid = MealService.getMealID(db, date, repast);
+            int mid = MealService.getMealID(conn, date, repast);
             st.setString(1, pid);
             st.setInt(2, mid);
 
@@ -88,11 +88,11 @@ public class ReservationService {
     }
 
     public static void makePurchase(
-            Database db,
+            Connection conn,
             String pid,
             int mid
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         // TODO(bora): This should've been just a flag in the table.
         try(PreparedStatement stSel = conn.prepareStatement(
@@ -140,10 +140,10 @@ public class ReservationService {
 
     /** Returns number of reservations made by given person that are not purchased yet. */
     public static int countUnpaid(
-            Database db,
+            Connection conn,
             String pid
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "SELECT COUNT(mid) as count FROM reservations WHERE pid=?")) {
@@ -162,10 +162,10 @@ public class ReservationService {
 
     /** Returns a list of reservations made by given person that are not purchased yet. */
     public static List<ReservedMeal> listUnpaid(
-            Database db,
+            Connection conn,
             String pid
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "SELECT reservations.mid, date, repast, refectory "
@@ -196,9 +196,9 @@ public class ReservationService {
 
     /** Returns a list of reservations made that are not purchased yet. */
     public static List<ReservedMeal> listUnpaidAll(
-            Database db
+            Connection conn
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "SELECT pid, reservations.mid, date, repast, refectory "
@@ -227,10 +227,10 @@ public class ReservationService {
 
     /** Returns a list of reservations purchased by given person. */
     public static List<ReservedMeal> listPaid(
-            Database db,
+            Connection conn,
             String pid
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "SELECT has_meal.mid, date, repast, refectory "
@@ -261,9 +261,9 @@ public class ReservationService {
 
     /** Returns a list of reservations purchased. */
     public static List<ReservedMeal> listPaidAll(
-            Database db
+            Connection conn
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "SELECT pid, has_meal.mid, date, repast, refectory "
@@ -291,12 +291,12 @@ public class ReservationService {
     }
 
     public static void changeReservationRefectory(
-            Database db,
+            Connection conn,
             String pid,
             int mid,
             String newRefectory
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "UPDATE has_meal SET refectory=? WHERE pid=? AND mid=?")) {
@@ -313,12 +313,12 @@ public class ReservationService {
     }
 
     public static void batchCancelReservationsByIDs(
-            Database db,
+            Connection conn,
             String pid,
             List<ReservedMeal> meals
     ) {
 
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "DELETE FROM reservations WHERE pid=? AND ("
@@ -329,7 +329,7 @@ public class ReservationService {
 
             for(int i = 0; i < meals.size(); ++i) {
                 ReservedMeal it = meals.get(i);
-                int mid = MealService.getMealID(db, it.getDate(), it.getRepast());
+                int mid = MealService.getMealID(conn, it.getDate(), it.getRepast());
                 st.setInt(i + 2, mid);
             }
 
@@ -340,7 +340,7 @@ public class ReservationService {
     }
 
     public static void batchCancelReservationsByDate(
-            Database db,
+            Connection conn,
             List<ReservedMeal> meals
     ) {
         List<Reservation> reservations = new ArrayList<>();
@@ -348,18 +348,18 @@ public class ReservationService {
             assert it.getDate() != null;
             assert it.getRepast() != null;
 
-            int mid = MealService.getMealID(db, it.getDate(), it.getRepast());
+            int mid = MealService.getMealID(conn, it.getDate(), it.getRepast());
             reservations.add(new Reservation(it.getPid(), mid, null));
         }
-        batchCancelReservationsByIDs(db, reservations);
+        batchCancelReservationsByIDs(conn, reservations);
     }
 
     public static void batchCancelReservationsByIDs(
-            Database db,
+            Connection conn,
             List<Reservation> meals
     ) {
 
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "DELETE FROM reservations WHERE "
@@ -381,11 +381,11 @@ public class ReservationService {
 
     /** This removes PAID reservations */
     public static void batchRemovePurchaseByIDs (
-            Database db,
+            Connection conn,
             List<Reservation> meals
     ) {
 
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "DELETE FROM has_meal WHERE "
@@ -407,11 +407,11 @@ public class ReservationService {
 
 
     public static void batchChangeReservationRefectory(
-            Database db,
+            Connection conn,
             List<Reservation> meals,
             String newRefectory
     ) {
-        Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
+
 
         try(PreparedStatement st = conn.prepareStatement(
                 "UPDATE has_meal SET refectory=? WHERE" + String.join(" OR ",
