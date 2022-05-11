@@ -195,7 +195,7 @@ public class ReservationService {
         Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
 
         try(PreparedStatement st = conn.prepareStatement(
-                "SELECT reservations.mid, date, repast, refectory "
+                "SELECT pid, reservations.mid, date, repast, refectory "
                     + "FROM reservations JOIN meal ON reservations.mid = meal.mid")) {
 
             ResultSet rs = st.executeQuery();
@@ -260,7 +260,7 @@ public class ReservationService {
         Connection conn = db.connection;  // TODO(bora): Remove `Database` class.
 
         try(PreparedStatement st = conn.prepareStatement(
-                "SELECT has_meal.mid, date, repast, refectory "
+                "SELECT pid, has_meal.mid, date, repast, refectory "
                     + "FROM has_meal JOIN meal ON has_meal.mid = meal.mid")) {
 
             ResultSet rs = st.executeQuery();
