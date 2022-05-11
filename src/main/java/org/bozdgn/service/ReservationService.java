@@ -102,7 +102,8 @@ public class ReservationService {
 
             ResultSet rs = stSel.executeQuery();
             if(!rs.next()) {
-                // NOTE(bora): Reservation not found. Skip the rest.
+
+                System.out.println("// NOTE(bora): Reservation not found. Skip the rest.");
                 return;
             }
             String refectory = rs.getString(1);
@@ -110,23 +111,28 @@ public class ReservationService {
             try(PreparedStatement stIns = conn.prepareStatement(
                         "INSERT INTO has_meal (pid, mid, refectory) " +
                                 "VALUES (?,?,?)")) {
+                System.out.println("// NOTE(bora): ınsert ınto");
 
                 stIns.setString(1, pid);
                 stIns.setInt(2, mid);
                 stIns.setString(3, refectory);
 
-                if(stIns.executeUpdate() > 0) {
-                    try(PreparedStatement stDel = conn.prepareStatement(
-                            "DELETE FROM reservations WHERE pid=? AND mid=?")) {
-
-                        stDel.setString(1, pid);
-                        stDel.setInt(2, mid);
-                        stDel.executeUpdate();
-                    }
+                try {
+                    stIns.executeUpdate();
+                } catch(SQLIntegrityConstraintViolationException e) {
+                    // NOTE(bora): It's already inserted. Proceed to delete from table.
                 }
+
+                try(PreparedStatement stDel = conn.prepareStatement(
+                        "DELETE FROM reservations WHERE pid=? AND mid=?")) {
+                    System.out.println("// NOTE(bora): delete from");
+
+                    stDel.setString(1, pid);
+                    stDel.setInt(2, mid);
+                    stDel.executeUpdate();
+                }
+
             }
-        } catch(SQLIntegrityConstraintViolationException e) {
-            // NOTE(bora): It's already inserted. Do nothing.
         } catch (SQLException e) {
             e.printStackTrace();
         }
